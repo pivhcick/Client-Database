@@ -1,7 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/storage/secure_storage.dart';
-import '../../domain/entities/user.dart';
-import '../../domain/entities/organization.dart';
+import '../../domain/entities/user.dart' as entities;
+import '../../domain/entities/organization.dart' as entities;
 import '../models/user_model.dart';
 import '../models/organization_model.dart';
 
@@ -25,7 +25,7 @@ class AuthRepository {
   /// Login with phone and password
   ///
   /// Returns User on success, throws exception on failure.
-  Future<User> login({
+  Future<entities.User> login({
     required String phone,
     required String password,
   }) async {
@@ -38,11 +38,7 @@ class AuthRepository {
           .eq('phone', phone)
           .single();
 
-      if (response == null) {
-        throw Exception('Пользователь с таким номером телефона не найден');
-      }
-
-      final userData = response as Map<String, dynamic>;
+      final userData = response;
 
       // Verify password (Supabase will handle this via RLS and custom function)
       // For now, we'll use a custom approach - you'll need to create a Supabase function
@@ -81,7 +77,7 @@ class AuthRepository {
   /// Get current authenticated user
   ///
   /// Returns User if authenticated, null otherwise.
-  Future<User?> getCurrentUser() async {
+  Future<entities.User?> getCurrentUser() async {
     try {
       // Check if we have stored user ID
       final userId = await _secureStorage.getUserId();
@@ -94,9 +90,7 @@ class AuthRepository {
           .eq('id', userId)
           .single();
 
-      if (response == null) return null;
-
-      final userModel = UserModel.fromJson(response as Map<String, dynamic>);
+      final userModel = UserModel.fromJson(response);
       return userModel.toEntity();
     } catch (e) {
       // If error, user is not authenticated
@@ -105,7 +99,7 @@ class AuthRepository {
   }
 
   /// Get organization for current user
-  Future<Organization?> getCurrentOrganization() async {
+  Future<entities.Organization?> getCurrentOrganization() async {
     try {
       final organizationId = await _secureStorage.getOrganizationId();
       if (organizationId == null) return null;
@@ -116,11 +110,7 @@ class AuthRepository {
           .eq('id', organizationId)
           .single();
 
-      if (response == null) return null;
-
-      final orgModel = OrganizationModel.fromJson(
-        response as Map<String, dynamic>,
-      );
+      final orgModel = OrganizationModel.fromJson(response);
       return orgModel.toEntity();
     } catch (e) {
       return null;
@@ -180,7 +170,7 @@ class AuthRepository {
   }
 
   /// Update user profile
-  Future<User> updateProfile({
+  Future<entities.User> updateProfile({
     required String userId,
     String? firstName,
     String? lastName,
@@ -201,7 +191,7 @@ class AuthRepository {
           .select()
           .single();
 
-      final userModel = UserModel.fromJson(response as Map<String, dynamic>);
+      final userModel = UserModel.fromJson(response);
       return userModel.toEntity();
     } on PostgrestException catch (e) {
       throw Exception('Ошибка обновления профиля: ${e.message}');

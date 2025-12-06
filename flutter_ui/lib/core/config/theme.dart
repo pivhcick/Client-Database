@@ -189,14 +189,10 @@ class AppTheme {
       ),
 
       // Card
-      cardTheme: CardTheme(
+      cardTheme: const CardThemeData(
         color: backgroundColor,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: borderColor, width: 1),
-        ),
-        margin: const EdgeInsets.symmetric(vertical: 8),
+        margin: EdgeInsets.symmetric(vertical: 8),
       ),
 
       // Divider

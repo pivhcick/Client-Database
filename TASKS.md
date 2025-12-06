@@ -9,39 +9,39 @@
 ### Supabase Setup
 | Задача | Статус | Примечания |
 |--------|--------|------------|
-| Создание Supabase проекта | ⏳ | https://supabase.com |
-| Создание таблицы `organizations` | ⏳ | См. схему в плане |
-| Создание таблицы `users` | ⏳ | С FK к organizations |
-| Создание таблицы `companies` | ⏳ | С FK к organizations и users |
-| Создание таблицы `contact_persons` | ⏳ | С FK к companies |
-| Создание таблицы `contact_records` | ⏳ | С FK к companies и users |
-| Создание таблицы `reminders` | ⏳ | С FK к companies и users |
-| Создание индексов для поиска/сортировки | ⏳ | idx_companies_name, etc. |
-| Настройка Row Level Security (RLS) политик | ⏳ | Изоляция по organization_id |
-| Создание триггера для last_contact_date | ⏳ | Auto-update при insert в contact_records |
-| Создание триггеров для updated_at | ⏳ | Для всех таблиц |
-| Настройка Supabase Auth | ⏳ | Включить email/password auth |
-| Создание тестовой организации | ⏳ | INSERT в organizations |
-| Создание admin пользователя | ⏳ | Role: admin |
-| Тестирование Supabase API через Dashboard | ⏳ | Проверка CRUD операций |
+| Создание Supabase проекта | ✅ | https://rcprdyenxwotgdanrycu.supabase.co |
+| Создание таблицы `organizations` | ✅ | См. схему в плане |
+| Создание таблицы `users` | ✅ | С FK к organizations |
+| Создание таблицы `companies` | ✅ | С FK к organizations и users |
+| Создание таблицы `contact_persons` | ✅ | С FK к companies |
+| Создание таблицы `contact_records` | ✅ | С FK к companies и users |
+| Создание таблицы `reminders` | ✅ | С FK к companies и users |
+| Создание индексов для поиска/сортировки | ✅ | idx_companies_name, etc. |
+| Настройка Row Level Security (RLS) политик | ✅ | Изоляция по organization_id |
+| Создание триггера для last_contact_date | ✅ | Auto-update при insert в contact_records |
+| Создание триггеров для updated_at | ✅ | Для всех таблиц |
+| Настройка Supabase Auth | ⏳ | Требуется RPC функции |
+| Создание тестовой организации | ✅ | INSERT в organizations |
+| Создание admin пользователя | ✅ | Role: admin |
+| Тестирование Supabase API через Dashboard | ✅ | Проверка CRUD операций |
 
 ### Flutter Project Setup
 | Задача | Статус | Примечания |
 |--------|--------|------------|
-| Обновить pubspec.yaml | ⏳ | Добавить supabase_flutter, provider, go_router, hive, etc. |
-| Создать структуру папок lib/core/ | ⏳ | config, storage, utils, widgets |
-| Создать структуру папок lib/features/ | ⏳ | auth, users, companies, etc. |
-| Создать папку lib/routes/ | ⏳ | Для app_router.dart |
-| Создать папку lib/legacy/ | ⏳ | Для старых UI компонентов |
-| Переместить существующий UI в legacy/ | ⏳ | components, pages, custom_widget |
-| Создать lib/core/config/supabase_config.dart | ⏳ | URL и ключи Supabase |
-| Создать lib/core/config/theme.dart | ⏳ | Светлая тема |
-| Setup Supabase Client в main.dart | ⏳ | Supabase.initialize() |
-| Создать lib/core/storage/secure_storage.dart | ⏳ | FlutterSecureStorage для JWT |
-| Создать lib/core/storage/hive_storage.dart | ⏳ | Hive init для кеширования |
-| Создать lib/core/utils/validators.dart | ⏳ | Валидаторы форм |
-| Создать lib/core/utils/date_formatter.dart | ⏳ | Форматирование дат (intl) |
-| Протестировать подключение к Supabase | ⏳ | Простой SELECT запрос |
+| Обновить pubspec.yaml | ✅ | Добавить supabase_flutter, provider, go_router, hive, etc. |
+| Создать структуру папок lib/core/ | ✅ | config, storage, utils, widgets |
+| Создать структуру папок lib/features/ | ✅ | auth, users, companies, etc. |
+| Создать папку lib/routes/ | ✅ | Для app_router.dart |
+| Создать папку lib/legacy/ | ✅ | Для старых UI компонентов |
+| Переместить существующий UI в legacy/ | ✅ | components, pages, custom_widget |
+| Создать lib/core/config/supabase_config.dart | ✅ | URL и ключи Supabase |
+| Создать lib/core/config/theme.dart | ✅ | Светлая тема |
+| Setup Supabase Client в main.dart | ✅ | Supabase.initialize() |
+| Создать lib/core/storage/secure_storage.dart | ✅ | FlutterSecureStorage для JWT |
+| Создать lib/core/storage/hive_storage.dart | ✅ | Hive init для кеширования |
+| Создать lib/core/utils/validators.dart | ✅ | Валидаторы форм |
+| Создать lib/core/utils/date_formatter.dart | ✅ | Форматирование дат (intl) |
+| Протестировать подключение к Supabase | ⏳ | Требуется создание RPC функций |
 
 ---
 
@@ -57,41 +57,41 @@
 ### Flutter - Models & Entities
 | Задача | Статус | Примечания |
 |--------|--------|------------|
-| Создать Organization entity | ⏳ | lib/features/auth/domain/entities/organization.dart |
-| Создать User entity | ⏳ | lib/features/auth/domain/entities/user.dart |
-| Создать OrganizationModel | ⏳ | JSON serialization, toEntity() |
-| Создать UserModel | ⏳ | JSON serialization, toEntity() |
+| Создать Organization entity | ✅ | lib/features/auth/domain/entities/organization.dart |
+| Создать User entity | ✅ | lib/features/auth/domain/entities/user.dart |
+| Создать OrganizationModel | ✅ | JSON serialization, toEntity() |
+| Создать UserModel | ✅ | JSON serialization, toEntity() |
 
 ### Flutter - Data Layer
 | Задача | Статус | Примечания |
 |--------|--------|------------|
-| Создать AuthRepository | ⏳ | lib/features/auth/data/repositories/auth_repository.dart |
-| Реализовать login() в AuthRepository | ⏳ | Supabase signInWithPassword |
-| Реализовать logout() в AuthRepository | ⏳ | Supabase signOut |
-| Реализовать resetPassword() в AuthRepository | ⏳ | Supabase resetPasswordForEmail |
-| Реализовать getCurrentUser() | ⏳ | Supabase auth.currentUser |
+| Создать AuthRepository | ✅ | lib/features/auth/data/repositories/auth_repository.dart |
+| Реализовать login() в AuthRepository | ✅ | Custom RPC функция authenticate_user |
+| Реализовать logout() в AuthRepository | ✅ | Очистка secure storage |
+| Реализовать resetPassword() в AuthRepository | ✅ | RPC функция request_password_reset |
+| Реализовать getCurrentUser() | ✅ | Запрос из users таблицы |
 
 ### Flutter - Presentation Layer
 | Задача | Статус | Примечания |
 |--------|--------|------------|
-| Создать AuthProvider (ChangeNotifier) | ⏳ | lib/features/auth/presentation/providers/auth_provider.dart |
-| Реализовать login() в AuthProvider | ⏳ | Вызов AuthRepository, error handling |
-| Реализовать logout() в AuthProvider | ⏳ | Очистка state |
-| Реализовать isAuthenticated getter | ⏳ | Проверка текущего пользователя |
+| Создать AuthProvider (ChangeNotifier) | ✅ | lib/features/auth/presentation/providers/auth_provider.dart |
+| Реализовать login() в AuthProvider | ✅ | Вызов AuthRepository, error handling |
+| Реализовать logout() в AuthProvider | ✅ | Очистка state |
+| Реализовать isAuthenticated getter | ✅ | Проверка текущего пользователя |
 
 ### Flutter - UI
 | Задача | Статус | Примечания |
 |--------|--------|------------|
-| Создать CustomTextField wrapper | ⏳ | lib/core/widgets/custom_text_field.dart (обертка над Component_2_441) |
-| Создать CustomButton wrapper | ⏳ | lib/core/widgets/custom_button.dart (обертка над Component_2_491) |
-| Создать LoginPage | ⏳ | Рефакторинг page_2_391.dart |
-| Создать PasswordResetPage | ⏳ | Рефакторинг page_6_1212.dart |
-| Создать PasswordResetSuccessPage | ⏳ | Рефакторинг page_6_3657.dart |
-| Setup GoRouter | ⏳ | lib/routes/app_router.dart |
-| Добавить auth guard в GoRouter | ⏳ | redirect на /login если не авторизован |
-| Добавить refreshListenable для AuthProvider | ⏳ | Auto-refresh при изменении auth state |
-| Setup MultiProvider в main.dart | ⏳ | AuthProvider |
-| Тестирование login flow | ⏳ | Login → redirect → logout |
+| Создать CustomTextField wrapper | ✅ | lib/core/widgets/custom_text_field.dart |
+| Создать CustomButton wrapper | ✅ | lib/core/widgets/custom_button.dart |
+| Создать LoginPage | ✅ | lib/features/auth/presentation/pages/login_page.dart |
+| Создать PasswordResetPage | ✅ | lib/features/auth/presentation/pages/password_reset_page.dart |
+| Создать PasswordResetSuccessPage | ⏸️ | Пропущено - UI в PasswordResetPage |
+| Setup GoRouter | ✅ | lib/routes/app_router.dart |
+| Добавить auth guard в GoRouter | ✅ | redirect на /login если не авторизован |
+| Добавить refreshListenable для AuthProvider | ✅ | Auto-refresh при изменении auth state |
+| Setup MultiProvider в main.dart | ✅ | AuthProvider + Supabase initialization |
+| Тестирование login flow | ⏳ | Требуется Supabase RPC функции |
 
 ---
 
