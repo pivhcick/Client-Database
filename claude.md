@@ -235,5 +235,5 @@ class CompanyProvider extends ChangeNotifier {
 ## Ссылки
 
 - **Дизайн:** https://pixso.net/app/design/5XjHdE-sNniE4bM8ZOtqgw
-- **Supabase Dashboard:** [Добавить после создания проекта]
+- **Supabase Dashboard:** https://supabase.com/dashboard/project/rcprdyenxwotgdanrycu
 - **Детальный план:** `.claude/plans/synthetic-forging-gray.md`
