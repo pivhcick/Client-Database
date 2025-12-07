@@ -100,29 +100,29 @@
 ### Supabase
 | Задача | Статус | Примечания |
 |--------|--------|------------|
-| Проверка RLS политик для admin операций | ⏳ | Только admin может CRUD users |
-| Тестирование CRUD users через Dashboard | ⏳ | INSERT, UPDATE, DELETE |
+| Проверка RLS политик для admin операций | ✅ | RLS политики работают |
+| Тестирование CRUD users через Dashboard | ⏳ | Требуется после создания RPC функций |
 
 ### Flutter - Data Layer
 | Задача | Статус | Примечания |
 |--------|--------|------------|
-| Создать UserRepository | ⏳ | lib/features/users/data/repositories/user_repository.dart |
-| Реализовать getAllUsers() | ⏳ | SELECT * FROM users WHERE organization_id = ? |
-| Реализовать createUser() | ⏳ | INSERT + password hash |
-| Реализовать updateUser() | ⏳ | UPDATE |
-| Реализовать deleteUser() | ⏳ | DELETE (с проверкой admin role) |
+| Создать UserRepository | ✅ | lib/features/users/data/repositories/user_repository.dart |
+| Реализовать getAllUsers() | ✅ | SELECT * FROM users WHERE organization_id = ? |
+| Реализовать createUser() | ✅ | INSERT + SHA-256 password hash |
+| Реализовать updateUser() | ✅ | UPDATE (с опциональным паролем) |
+| Реализовать deleteUser() | ✅ | DELETE (защита от self-deletion) |
 
 ### Flutter - Presentation
 | Задача | Статус | Примечания |
 |--------|--------|------------|
-| Создать UserProvider | ⏳ | lib/features/users/presentation/providers/user_provider.dart |
-| Создать UsersListPage | ⏳ | lib/features/users/presentation/pages/users_list_page.dart |
-| Создать UserCreatePage | ⏳ | Рефакторинг page_2_825.dart |
-| Создать UserEditPage | ⏳ | Использовать ту же форму что и Create |
-| Создать UserDeleteConfirmationDialog | ⏳ | Рефакторинг page_22_1334.dart |
-| Добавить /users роут в GoRouter | ⏳ | С redirect проверкой isAdmin |
-| Добавить Users в navigation (bottom bar) | ⏳ | Только для admin |
-| Тестирование CRUD пользователей | ⏳ | Create, edit, delete |
+| Создать UserProvider | ✅ | lib/features/users/presentation/providers/user_provider.dart |
+| Создать UsersListPage | ✅ | lib/features/users/presentation/pages/users_list_page.dart |
+| Создать UserCreatePage | ✅ | lib/features/users/presentation/pages/user_form_page.dart |
+| Создать UserEditPage | ✅ | UserFormPage (универсальная форма) |
+| Создать UserDeleteConfirmationDialog | ✅ | Встроено в UsersListPage |
+| Добавить /users роут в GoRouter | ✅ | С admin guard через redirect |
+| Добавить Users в navigation (bottom bar) | ✅ | Кнопка на HomePage (admin only) |
+| Тестирование CRUD пользователей | ⏳ | Требуется после создания RPC функций |
 
 ---
 
@@ -137,41 +137,41 @@
 ### Flutter - Models & Entities
 | Задача | Статус | Примечания |
 |--------|--------|------------|
-| Создать Company entity | ⏳ | lib/features/companies/domain/entities/company.dart |
-| Создать CompanyModel | ⏳ | С JSON serialization |
-| Создать CompanyStatus enum | ⏳ | real, potential, lost |
+| Создать Company entity | ✅ | lib/features/companies/domain/entities/company.dart |
+| Создать CompanyModel | ✅ | С JSON serialization |
+| Создать CompanyStatus enum | ✅ | real, potential, lost |
 
 ### Flutter - Data Layer
 | Задача | Статус | Примечания |
 |--------|--------|------------|
-| Создать CompanyRepository | ⏳ | lib/features/companies/data/repositories/company_repository.dart |
-| Реализовать getAllCompanies() | ⏳ | С фильтрами, сортировкой, pagination |
-| Реализовать getCompanyById() | ⏳ | SELECT WHERE id = ? |
-| Реализовать searchCompanies() | ⏳ | ILIKE по name и phone |
-| Реализовать filterByStatus() | ⏳ | WHERE status = ? |
-| Реализовать sortBy() | ⏳ | ORDER BY (name ASC, last_contact_date DESC) |
-| Реализовать createCompany() | ⏳ | INSERT |
-| Реализовать updateCompany() | ⏳ | UPDATE |
-| Реализовать deleteCompany() | ⏳ | DELETE |
+| Создать CompanyRepository | ✅ | lib/features/companies/data/repositories/company_repository.dart |
+| Реализовать getAllCompanies() | ✅ | С фильтрами, сортировкой |
+| Реализовать getCompanyById() | ✅ | SELECT WHERE id = ? |
+| Реализовать searchCompanies() | ✅ | ILIKE по name, phone, address |
+| Реализовать filterByStatus() | ✅ | getCompaniesFiltered() |
+| Реализовать sortBy() | ✅ | CompanySortField + SortDirection |
+| Реализовать createCompany() | ✅ | INSERT |
+| Реализовать updateCompany() | ✅ | UPDATE |
+| Реализовать deleteCompany() | ✅ | DELETE |
 
 ### Flutter - Presentation
 | Задача | Статус | Примечания |
 |--------|--------|------------|
-| Создать CompanyProvider | ⏳ | С search, filter, sort state |
-| Создать CompaniesListPage | ⏳ | Рефакторинг page_25_4312.dart |
-| Добавить SearchBar в CompaniesListPage | ⏳ | TextField с debounce |
-| Добавить Sort dropdown | ⏳ | А-Я / Дата контакта |
-| Добавить Filter chips | ⏳ | По статусу (real/potential/lost) |
-| Добавить Pull-to-refresh | ⏳ | RefreshIndicator |
-| Создать CompanyDetailPage | ⏳ | Рефакторинг page_25_6586.dart |
-| Создать CompanyCreatePage | ⏳ | Рефакторинг page_25_5214.dart |
-| Создать CompanyEditPage | ⏳ | Рефакторинг page_25_5230.dart |
-| Создать CompanyDeleteConfirmationDialog | ⏳ | Рефакторинг page_25_7585.dart |
-| Добавить Hive caching для offline | ⏳ | Кешировать список компаний |
-| Добавить sync при подключении к сети | ⏳ | connectivity_plus |
-| Добавить /companies роуты в GoRouter | ⏳ | List, Detail, Create, Edit |
-| Добавить Companies в bottom navigation | ⏳ | Главный экран |
-| Тестирование CRUD компаний | ⏳ | Create, edit, delete, search, filter, sort |
+| Создать CompanyProvider | ✅ | С search, filter, sort state |
+| Создать CompaniesListPage | ✅ | С drawer navigation для админов |
+| Добавить SearchBar в CompaniesListPage | ✅ | TextField с clear button |
+| Добавить Sort dropdown | ⏸️ | Отложено - используем FilterChips |
+| Добавить Filter chips | ✅ | По статусу (Все/Реальный/Потенциальный/Потерянный) |
+| Добавить Pull-to-refresh | ✅ | RefreshIndicator |
+| Создать CompanyDetailPage | ⏳ | Запланировано на Phase 5 |
+| Создать CompanyCreatePage | ✅ | CompanyFormPage (универсальная форма) |
+| Создать CompanyEditPage | ✅ | CompanyFormPage с companyId |
+| Создать CompanyDeleteConfirmationDialog | ✅ | Встроено в CompaniesListPage |
+| Добавить Hive caching для offline | ⏸️ | Отложено до Phase 8 (Performance) |
+| Добавить sync при подключении к сети | ⏸️ | Отложено до Phase 8 (Performance) |
+| Добавить /companies роуты в GoRouter | ✅ | /, /companies/create, /companies/:id/edit |
+| Добавить Companies в bottom navigation | ✅ | Главный экран (/) |
+| Тестирование CRUD компаний | ⏳ | Требуется после создания RPC функций |
 
 ---
 
@@ -363,4 +363,4 @@
 - **В процессе:** 0
 - **Осталось:** TBD
 
-**Последнее обновление:** 2025-12-05
+**Последнее обновление:** 2025-12-07 (Фаза 4 завершена)

@@ -3,6 +3,10 @@ import 'package:go_router/go_router.dart';
 import '../features/auth/presentation/providers/auth_provider.dart';
 import '../features/auth/presentation/pages/login_page.dart';
 import '../features/auth/presentation/pages/password_reset_page.dart';
+import '../features/users/presentation/pages/users_list_page.dart';
+import '../features/users/presentation/pages/user_form_page.dart';
+import '../features/companies/presentation/pages/companies_list_page.dart';
+import '../features/companies/presentation/pages/company_form_page.dart';
 
 /// Application router configuration
 ///
@@ -30,20 +34,58 @@ class AppRouter {
         builder: (context, state) => const PasswordResetPage(),
       ),
 
-      // Protected routes - placeholder for now
+      // Home route - Companies list
       GoRoute(
         path: '/',
         name: 'home',
-        builder: (context, state) => const _PlaceholderHomePage(),
+        builder: (context, state) => const CompaniesListPage(),
+      ),
+
+      // User management routes (admin only)
+      GoRoute(
+        path: '/users',
+        name: 'users',
+        builder: (context, state) => const UsersListPage(),
+      ),
+      GoRoute(
+        path: '/users/create',
+        name: 'user-create',
+        builder: (context, state) => const UserFormPage(),
+      ),
+      GoRoute(
+        path: '/users/:id/edit',
+        name: 'user-edit',
+        builder: (context, state) {
+          final userId = state.pathParameters['id'];
+          return UserFormPage(userId: userId);
+        },
+      ),
+
+      // Company routes
+      GoRoute(
+        path: '/companies/create',
+        name: 'company-create',
+        builder: (context, state) => const CompanyFormPage(),
+      ),
+      GoRoute(
+        path: '/companies/:id',
+        name: 'company-detail',
+        builder: (context, state) {
+          // TODO: Create CompanyDetailPage in Phase 5
+          // final companyId = state.pathParameters['id'];
+          return const _ComingSoonPage(title: 'Детали компании');
+        },
+      ),
+      GoRoute(
+        path: '/companies/:id/edit',
+        name: 'company-edit',
+        builder: (context, state) {
+          final companyId = state.pathParameters['id'];
+          return CompanyFormPage(companyId: companyId);
+        },
       ),
 
       // TODO: Add more routes in future phases:
-      // - /companies (CompaniesListPage)
-      // - /companies/:id (CompanyDetailPage)
-      // - /companies/create (CompanyCreatePage)
-      // - /companies/:id/edit (CompanyEditPage)
-      // - /users (UsersListPage) - admin only
-      // - /users/create (UserCreatePage) - admin only
       // - /notifications (NotificationsPage)
       // - /profile (ProfilePage)
     ],
@@ -54,10 +96,13 @@ class AppRouter {
   ///
   /// - If not authenticated → redirect to /login
   /// - If authenticated and on /login → redirect to /
+  /// - If not admin trying to access /users → redirect to /
   String? _handleRedirect(BuildContext context, GoRouterState state) {
     final isAuthenticated = authProvider.isAuthenticated;
+    final isAdmin = authProvider.isAdmin;
     final isLoggingIn = state.matchedLocation == '/login';
     final isPasswordReset = state.matchedLocation == '/password-reset';
+    final isUsersRoute = state.matchedLocation.startsWith('/users');
 
     // Allow access to login and password reset pages when not authenticated
     if (!isAuthenticated) {
@@ -72,36 +117,31 @@ class AppRouter {
       return '/';
     }
 
+    // Admin guard: Only admins can access /users routes
+    if (isUsersRoute && !isAdmin) {
+      return '/';
+    }
+
     // No redirect needed
     return null;
   }
 }
 
-/// Placeholder home page
-///
-/// TODO: Replace with actual CompaniesListPage in Phase 4
-class _PlaceholderHomePage extends StatelessWidget {
-  const _PlaceholderHomePage();
+/// Coming soon page for features in development
+class _ComingSoonPage extends StatelessWidget {
+  final String title;
+
+  const _ComingSoonPage({required this.title});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Комплексное обеспечение'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              // TODO: Get AuthProvider and call logout
-              // For now, just show a message
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Выход из системы (TODO: implement)'),
-                ),
-              );
-            },
-          ),
-        ],
+        title: Text(title),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/'),
+        ),
       ),
       body: Center(
         child: Column(
@@ -114,7 +154,7 @@ class _PlaceholderHomePage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             const Text(
-              'Добро пожаловать!',
+              'Скоро будет доступно',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -123,13 +163,18 @@ class _PlaceholderHomePage extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Компании, пользователи и другие экраны\nбудут добавлены в следующих фазах.',
+              'Эта функция будет добавлена\nв следующих фазах.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
                 color: Color(0xFF8F9098),
                 fontFamily: 'Inter',
               ),
+            ),
+            const SizedBox(height: 24),
+            TextButton(
+              onPressed: () => context.go('/'),
+              child: const Text('Вернуться на главную'),
             ),
           ],
         ),

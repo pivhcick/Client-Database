@@ -30,18 +30,7 @@ class AuthRepository {
     required String password,
   }) async {
     try {
-      // Supabase Auth uses email field, but we'll use phone as identifier
-      // First, query the users table to get user by phone
-      final response = await _supabase
-          .from('users')
-          .select('*, organizations(*)')
-          .eq('phone', phone)
-          .single();
-
-      final userData = response;
-
-      // Verify password (Supabase will handle this via RLS and custom function)
-      // For now, we'll use a custom approach - you'll need to create a Supabase function
+      // Call RPC function to authenticate
       final authResponse = await _supabase.rpc(
         'authenticate_user',
         params: {
@@ -50,8 +39,21 @@ class AuthRepository {
         },
       );
 
+      // Check if authentication was successful
       if (authResponse == null || authResponse['success'] != true) {
-        throw Exception('Неверный пароль');
+        final message = authResponse?['message'] ?? 'Ошибка авторизации';
+        throw Exception(message);
+      }
+
+      // Extract user data from response
+      final userData = authResponse['user'];
+      if (userData == null) {
+        throw Exception('Ошибка получения данных пользователя');
+      }
+
+      // Add organization data to user object for model parsing
+      if (authResponse['organization'] != null) {
+        userData['organizations'] = authResponse['organization'];
       }
 
       // Create user model
@@ -61,7 +63,7 @@ class AuthRepository {
       await _secureStorage.saveUserId(userModel.id);
       await _secureStorage.saveOrganizationId(userModel.organizationId);
 
-      // For token, we'll use a generated JWT from the RLS function
+      // Store token
       if (authResponse['token'] != null) {
         await _secureStorage.saveAccessToken(authResponse['token']);
       }
@@ -70,7 +72,9 @@ class AuthRepository {
     } on PostgrestException catch (e) {
       throw Exception('Ошибка входа: ${e.message}');
     } catch (e) {
-      throw Exception('Ошибка входа: ${e.toString()}');
+      // Extract error message if it's an Exception
+      final errorMessage = e.toString().replaceAll('Exception: ', '');
+      throw Exception('Ошибка входа: $errorMessage');
     }
   }
 
@@ -83,12 +87,13 @@ class AuthRepository {
       final userId = await _secureStorage.getUserId();
       if (userId == null) return null;
 
-      // Fetch user from Supabase
-      final response = await _supabase
-          .from('users')
-          .select()
-          .eq('id', userId)
-          .single();
+      // Fetch user from Supabase using RPC function
+      final response = await _supabase.rpc(
+        'get_user_by_id',
+        params: {'user_id': userId},
+      );
+
+      if (response == null) return null;
 
       final userModel = UserModel.fromJson(response);
       return userModel.toEntity();

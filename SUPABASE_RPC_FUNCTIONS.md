@@ -26,6 +26,7 @@ SECURITY DEFINER
 AS $$
 DECLARE
   v_user RECORD;
+  v_organization RECORD;
   v_password_hash TEXT;
   v_token TEXT;
 BEGIN
@@ -47,15 +48,35 @@ BEGIN
     RETURN json_build_object('success', false, 'message', 'Неверный пароль');
   END IF;
 
+  -- Получить организацию
+  SELECT * INTO v_organization
+  FROM organizations
+  WHERE id = v_user.organization_id;
+
   -- Сгенерировать простой токен (в продакшене используйте JWT)
   v_token := encode(gen_random_bytes(32), 'base64');
 
-  -- Вернуть успех с токеном
+  -- Вернуть успех с полными данными пользователя
   RETURN json_build_object(
     'success', true,
     'token', v_token,
-    'user_id', v_user.id,
-    'organization_id', v_user.organization_id
+    'user', json_build_object(
+      'id', v_user.id,
+      'phone', v_user.phone,
+      'first_name', v_user.first_name,
+      'last_name', v_user.last_name,
+      'middle_name', v_user.middle_name,
+      'email', v_user.email,
+      'role', v_user.role,
+      'organization_id', v_user.organization_id,
+      'created_at', v_user.created_at,
+      'updated_at', v_user.updated_at
+    ),
+    'organization', json_build_object(
+      'id', v_organization.id,
+      'name', v_organization.name,
+      'created_at', v_organization.created_at
+    )
   );
 END;
 $$;
@@ -156,6 +177,62 @@ $$;
 
 ---
 
+## 4. Функция get_user_by_id
+
+Получает данные пользователя по ID (для восстановления сессии).
+
+```sql
+-- Функция для получения пользователя по ID
+CREATE OR REPLACE FUNCTION get_user_by_id(
+  user_id UUID
+)
+RETURNS JSON
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_user RECORD;
+  v_organization RECORD;
+BEGIN
+  -- Получить пользователя по ID
+  SELECT * INTO v_user
+  FROM users
+  WHERE id = user_id;
+
+  -- Если пользователь не найден
+  IF v_user.id IS NULL THEN
+    RETURN NULL;
+  END IF;
+
+  -- Получить организацию
+  SELECT * INTO v_organization
+  FROM organizations
+  WHERE id = v_user.organization_id;
+
+  -- Вернуть данные пользователя
+  RETURN json_build_object(
+    'id', v_user.id,
+    'phone', v_user.phone,
+    'first_name', v_user.first_name,
+    'last_name', v_user.last_name,
+    'middle_name', v_user.middle_name,
+    'email', v_user.email,
+    'role', v_user.role,
+    'organization_id', v_user.organization_id,
+    'created_at', v_user.created_at,
+    'updated_at', v_user.updated_at,
+    'organizations', json_build_object(
+      'id', v_organization.id,
+      'name', v_organization.name,
+      'created_at', v_organization.created_at
+    )
+  );
+END;
+$$;
+```
+
+---
+
 ## Проверка создания функций
 
 После создания функций выполните:
@@ -165,10 +242,10 @@ $$;
 SELECT routine_name, routine_type
 FROM information_schema.routines
 WHERE routine_schema = 'public'
-  AND routine_name IN ('authenticate_user', 'request_password_reset', 'reset_password_with_code');
+  AND routine_name IN ('authenticate_user', 'request_password_reset', 'reset_password_with_code', 'get_user_by_id');
 ```
 
-Вы должны увидеть 3 строки с типом FUNCTION.
+Вы должны увидеть 4 строки с типом FUNCTION.
 
 ---
 
