@@ -64,7 +64,13 @@ class _UserFormPageState extends State<UserFormPage> {
 
       setState(() {
         _existingUser = user;
-        _phoneController.text = user.phone.replaceFirst('+7', '');
+        // Extract only digits from phone number (remove +7 and any formatting)
+        final digitsOnly = user.phone.replaceAll(RegExp(r'[^\d]'), '');
+        // Remove leading 7 if present to get the 10 digits for the mask
+        final phoneDigits = digitsOnly.startsWith('7')
+            ? digitsOnly.substring(1)
+            : digitsOnly;
+        _phoneController.text = phoneDigits;
         _firstNameController.text = user.firstName;
         _lastNameController.text = user.lastName;
         _middleNameController.text = user.middleName;

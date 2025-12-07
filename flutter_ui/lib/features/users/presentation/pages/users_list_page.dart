@@ -147,6 +147,12 @@ class _UsersListPageState extends State<UsersListPage> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
         title: const Text('Пользователи'),
         actions: [
           // Stats badge
@@ -181,6 +187,7 @@ class _UsersListPageState extends State<UsersListPage> {
           ),
         ],
       ),
+      drawer: _buildDrawer(context, authProvider),
       body: Column(
         children: [
           // Search bar
@@ -430,6 +437,86 @@ class _UsersListPageState extends State<UsersListPage> {
         onPressed: () => context.go('/users/create'),
         backgroundColor: const Color(0xFF006FFD),
         child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildDrawer(BuildContext context, AuthProvider authProvider) {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: const BoxDecoration(
+              color: Color(0xFF006FFD),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                const CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.white,
+                  child: Icon(
+                    Icons.person,
+                    size: 36,
+                    color: Color(0xFF006FFD),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  authProvider.currentUser?.fullName ?? '',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Sora',
+                  ),
+                ),
+                Text(
+                  authProvider.currentUser?.email ?? '',
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                    fontFamily: 'Inter',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.business),
+            title: const Text('Компании'),
+            onTap: () {
+              Navigator.pop(context);
+              context.go('/companies');
+            },
+          ),
+          if (authProvider.isAdmin)
+            ListTile(
+              leading: const Icon(Icons.people),
+              title: const Text('Пользователи'),
+              selected: true,
+              selectedTileColor: const Color(0xFF006FFD).withOpacity(0.1),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.logout, color: Color(0xFFF53178)),
+            title: const Text(
+              'Выйти',
+              style: TextStyle(color: Color(0xFFF53178)),
+            ),
+            onTap: () async {
+              await authProvider.logout();
+              if (context.mounted) {
+                context.go('/login');
+              }
+            },
+          ),
+        ],
       ),
     );
   }

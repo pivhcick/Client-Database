@@ -63,7 +63,8 @@ void main() async {
         ChangeNotifierProvider.value(value: authProvider),
 
         // UserProvider (depends on AuthProvider)
-        ProxyProvider<AuthProvider, UserProvider?>(
+        ChangeNotifierProxyProvider<AuthProvider, UserProvider?>(
+          create: (_) => null,
           update: (context, authProvider, previous) {
             // Only create UserProvider if user is authenticated and has organization
             if (authProvider.isAuthenticated &&
@@ -80,7 +81,8 @@ void main() async {
         ),
 
         // CompanyProvider (depends on AuthProvider)
-        ProxyProvider<AuthProvider, CompanyProvider?>(
+        ChangeNotifierProxyProvider<AuthProvider, CompanyProvider?>(
+          create: (_) => null,
           update: (context, authProvider, previous) {
             // Only create CompanyProvider if user is authenticated and has organization
             if (authProvider.isAuthenticated &&

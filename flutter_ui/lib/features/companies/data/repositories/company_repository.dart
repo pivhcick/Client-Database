@@ -31,11 +31,10 @@ class CompanyRepository {
   /// Get all companies in the organization
   Future<List<Company>> getAllCompanies() async {
     try {
-      final response = await _supabase
-          .from('companies')
-          .select()
-          .eq('organization_id', _organizationId)
-          .order('created_at', ascending: false);
+      final response = await _supabase.rpc(
+        'get_companies',
+        params: {'org_id': _organizationId},
+      );
 
       final companies = (response as List)
           .map((json) => CompanyModel.fromJson(json).toEntity())
@@ -52,14 +51,19 @@ class CompanyRepository {
   /// Get company by ID
   Future<Company> getCompanyById(String companyId) async {
     try {
-      final response = await _supabase
-          .from('companies')
-          .select()
-          .eq('id', companyId)
-          .eq('organization_id', _organizationId)
-          .single();
+      final response = await _supabase.rpc(
+        'get_company_by_id',
+        params: {
+          'comp_id': companyId,
+          'org_id': _organizationId,
+        },
+      );
 
-      final companyModel = CompanyModel.fromJson(response);
+      if (response == null || (response as List).isEmpty) {
+        throw Exception('Компания не найдена');
+      }
+
+      final companyModel = CompanyModel.fromJson((response as List).first);
       return companyModel.toEntity();
     } on PostgrestException catch (e) {
       throw Exception('Компания не найдена: ${e.message}');
@@ -79,21 +83,25 @@ class CompanyRepository {
     required String createdByUserId,
   }) async {
     try {
-      final data = {
-        'name': name,
-        'phone': phone,
-        'email': email,
-        'address': address,
-        'status': status.value,
-        'content': content,
-        'organization_id': _organizationId,
-        'created_by_user_id': createdByUserId,
-      };
+      final response = await _supabase.rpc(
+        'create_company',
+        params: {
+          'comp_name': name,
+          'comp_phone': phone,
+          'comp_email': email,
+          'comp_address': address,
+          'comp_status': status.value,
+          'comp_content': content,
+          'org_id': _organizationId,
+          'user_id': createdByUserId,
+        },
+      );
 
-      final response =
-          await _supabase.from('companies').insert(data).select().single();
+      if (response == null || (response as List).isEmpty) {
+        throw Exception('Не удалось создать компанию');
+      }
 
-      final companyModel = CompanyModel.fromJson(response);
+      final companyModel = CompanyModel.fromJson((response as List).first);
       return companyModel.toEntity();
     } on PostgrestException catch (e) {
       if (e.code == '23505') {
@@ -118,28 +126,25 @@ class CompanyRepository {
     String? content,
   }) async {
     try {
-      final data = <String, dynamic>{};
+      final response = await _supabase.rpc(
+        'update_company',
+        params: {
+          'comp_id': companyId,
+          'org_id': _organizationId,
+          'comp_name': name,
+          'comp_phone': phone,
+          'comp_email': email,
+          'comp_address': address,
+          'comp_status': status?.value,
+          'comp_content': content,
+        },
+      );
 
-      if (name != null) data['name'] = name;
-      if (phone != null) data['phone'] = phone;
-      if (email != null) data['email'] = email;
-      if (address != null) data['address'] = address;
-      if (status != null) data['status'] = status.value;
-      if (content != null) data['content'] = content;
-
-      if (data.isEmpty) {
-        throw Exception('Нет данных для обновления');
+      if (response == null || (response as List).isEmpty) {
+        throw Exception('Не удалось обновить компанию');
       }
 
-      final response = await _supabase
-          .from('companies')
-          .update(data)
-          .eq('id', companyId)
-          .eq('organization_id', _organizationId)
-          .select()
-          .single();
-
-      final companyModel = CompanyModel.fromJson(response);
+      final companyModel = CompanyModel.fromJson((response as List).first);
       return companyModel.toEntity();
     } on PostgrestException catch (e) {
       if (e.code == '23505') {
@@ -156,11 +161,17 @@ class CompanyRepository {
   /// Delete company
   Future<void> deleteCompany(String companyId) async {
     try {
-      await _supabase
-          .from('companies')
-          .delete()
-          .eq('id', companyId)
-          .eq('organization_id', _organizationId);
+      final response = await _supabase.rpc(
+        'delete_company',
+        params: {
+          'comp_id': companyId,
+          'org_id': _organizationId,
+        },
+      );
+
+      if (response == false) {
+        throw Exception('Компания не найдена или не удалена');
+      }
     } on PostgrestException catch (e) {
       throw Exception('Ошибка удаления компании: ${e.message}');
     } catch (e) {
@@ -175,13 +186,13 @@ class CompanyRepository {
     }
 
     try {
-      // Search in name, phone, and address fields
-      final response = await _supabase
-          .from('companies')
-          .select()
-          .eq('organization_id', _organizationId)
-          .or('name.ilike.%$query%,phone.ilike.%$query%,address.ilike.%$query%')
-          .order('created_at', ascending: false);
+      final response = await _supabase.rpc(
+        'search_companies',
+        params: {
+          'org_id': _organizationId,
+          'search_query': query,
+        },
+      );
 
       final companies = (response as List)
           .map((json) => CompanyModel.fromJson(json).toEntity())
@@ -202,30 +213,32 @@ class CompanyRepository {
     SortDirection sortDirection = SortDirection.descending,
   }) async {
     try {
-      var query =
-          _supabase.from('companies').select().eq('organization_id', _organizationId);
-
-      // Apply status filter
-      if (statusFilter != null) {
-        query = query.eq('status', statusFilter.value);
-      }
-
-      // Apply sorting
-      String orderColumn;
+      // Map sort field to column name
+      String sortFieldName;
       switch (sortField) {
         case CompanySortField.name:
-          orderColumn = 'name';
+          sortFieldName = 'name';
           break;
         case CompanySortField.lastContactDate:
-          orderColumn = 'last_contact_date';
+          sortFieldName = 'last_contact_date';
           break;
         case CompanySortField.createdAt:
-          orderColumn = 'created_at';
+          sortFieldName = 'created_at';
           break;
       }
 
-      final response = await query.order(orderColumn,
-          ascending: sortDirection == SortDirection.ascending);
+      // Map sort direction
+      String sortDir = sortDirection == SortDirection.ascending ? 'asc' : 'desc';
+
+      final response = await _supabase.rpc(
+        'get_companies_filtered',
+        params: {
+          'org_id': _organizationId,
+          'status_filter': statusFilter?.value,
+          'sort_field': sortFieldName,
+          'sort_direction': sortDir,
+        },
+      );
 
       final companies = (response as List)
           .map((json) => CompanyModel.fromJson(json).toEntity())
@@ -242,14 +255,8 @@ class CompanyRepository {
   /// Get statistics: count by status
   Future<Map<String, int>> getCompaniesCountByStatus() async {
     try {
-      final response = await _supabase
-          .from('companies')
-          .select()
-          .eq('organization_id', _organizationId);
-
-      final companies = (response as List)
-          .map((json) => CompanyModel.fromJson(json).toEntity())
-          .toList();
+      // Use getAllCompanies and count on client side
+      final companies = await getAllCompanies();
 
       final stats = <String, int>{
         'total': companies.length,
@@ -260,8 +267,6 @@ class CompanyRepository {
       };
 
       return stats;
-    } on PostgrestException catch (e) {
-      throw Exception('Ошибка получения статистики: ${e.message}');
     } catch (e) {
       throw Exception('Ошибка получения статистики: $e');
     }

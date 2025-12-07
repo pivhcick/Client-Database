@@ -109,11 +109,12 @@ class AuthRepository {
       final organizationId = await _secureStorage.getOrganizationId();
       if (organizationId == null) return null;
 
-      final response = await _supabase
-          .from('organizations')
-          .select()
-          .eq('id', organizationId)
-          .single();
+      final response = await _supabase.rpc(
+        'get_organization_by_id',
+        params: {'org_id': organizationId},
+      );
+
+      if (response == null) return null;
 
       final orgModel = OrganizationModel.fromJson(response);
       return orgModel.toEntity();

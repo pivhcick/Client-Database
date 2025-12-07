@@ -1,6 +1,4 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:crypto/crypto.dart';
-import 'dart:convert';
 import '../../../auth/domain/entities/user.dart' as entities;
 import '../../../auth/data/models/user_model.dart';
 
@@ -21,11 +19,10 @@ class UserRepository {
   /// Get all users in the organization
   Future<List<entities.User>> getAllUsers() async {
     try {
-      final response = await _supabase
-          .from('users')
-          .select()
-          .eq('organization_id', _organizationId)
-          .order('created_at', ascending: false);
+      final response = await _supabase.rpc(
+        'get_users',
+        params: {'org_id': _organizationId},
+      );
 
       final users = (response as List)
           .map((json) => UserModel.fromJson(json))
@@ -43,14 +40,19 @@ class UserRepository {
   /// Get user by ID
   Future<entities.User> getUserById(String userId) async {
     try {
-      final response = await _supabase
-          .from('users')
-          .select()
-          .eq('id', userId)
-          .eq('organization_id', _organizationId)
-          .single();
+      final response = await _supabase.rpc(
+        'get_user_by_id_admin',
+        params: {
+          'user_id': userId,
+          'org_id': _organizationId,
+        },
+      );
 
-      final userModel = UserModel.fromJson(response);
+      if (response == null || (response as List).isEmpty) {
+        throw Exception('Пользователь не найден');
+      }
+
+      final userModel = UserModel.fromJson((response as List).first);
       return userModel.toEntity();
     } on PostgrestException catch (e) {
       throw Exception('Ошибка загрузки пользователя: ${e.message}');
@@ -73,27 +75,25 @@ class UserRepository {
     required String password,
   }) async {
     try {
-      // Hash password with SHA-256
-      final passwordHash = sha256.convert(utf8.encode(password)).toString();
+      final response = await _supabase.rpc(
+        'create_user_admin',
+        params: {
+          'user_phone': phone,
+          'user_first_name': firstName,
+          'user_last_name': lastName,
+          'user_middle_name': middleName,
+          'user_email': email,
+          'user_password': password,
+          'user_role': role.value,
+          'org_id': _organizationId,
+        },
+      );
 
-      final data = {
-        'phone': phone,
-        'first_name': firstName,
-        'last_name': lastName,
-        'middle_name': middleName,
-        'email': email,
-        'role': role.value,
-        'organization_id': _organizationId,
-        'password_hash': passwordHash,
-      };
+      if (response == null || (response as List).isEmpty) {
+        throw Exception('Не удалось создать пользователя');
+      }
 
-      final response = await _supabase
-          .from('users')
-          .insert(data)
-          .select()
-          .single();
-
-      final userModel = UserModel.fromJson(response);
+      final userModel = UserModel.fromJson((response as List).first);
       return userModel.toEntity();
     } on PostgrestException catch (e) {
       // Check for unique constraint violations
@@ -114,7 +114,7 @@ class UserRepository {
   /// Update user
   ///
   /// Only admin can update users.
-  /// Password update is optional.
+  /// Password update is not supported through this method (security).
   Future<entities.User> updateUser({
     required String userId,
     String? phone,
@@ -123,37 +123,27 @@ class UserRepository {
     String? middleName,
     String? email,
     entities.UserRole? role,
-    String? newPassword,
+    String? newPassword, // Deprecated - not used
   }) async {
     try {
-      final updates = <String, dynamic>{};
+      final response = await _supabase.rpc(
+        'update_user_admin',
+        params: {
+          'user_id': userId,
+          'org_id': _organizationId,
+          'user_first_name': firstName,
+          'user_last_name': lastName,
+          'user_middle_name': middleName,
+          'user_email': email,
+          'user_role': role?.value,
+        },
+      );
 
-      if (phone != null) updates['phone'] = phone;
-      if (firstName != null) updates['first_name'] = firstName;
-      if (lastName != null) updates['last_name'] = lastName;
-      if (middleName != null) updates['middle_name'] = middleName;
-      if (email != null) updates['email'] = email;
-      if (role != null) updates['role'] = role.value;
-
-      // Update password if provided
-      if (newPassword != null && newPassword.isNotEmpty) {
-        final passwordHash = sha256.convert(utf8.encode(newPassword)).toString();
-        updates['password_hash'] = passwordHash;
+      if (response == null || (response as List).isEmpty) {
+        throw Exception('Не удалось обновить пользователя');
       }
 
-      if (updates.isEmpty) {
-        throw Exception('Нет данных для обновления');
-      }
-
-      final response = await _supabase
-          .from('users')
-          .update(updates)
-          .eq('id', userId)
-          .eq('organization_id', _organizationId)
-          .select()
-          .single();
-
-      final userModel = UserModel.fromJson(response);
+      final userModel = UserModel.fromJson((response as List).first);
       return userModel.toEntity();
     } on PostgrestException catch (e) {
       // Check for unique constraint violations
@@ -182,11 +172,17 @@ class UserRepository {
         throw Exception('Невозможно удалить свой собственный аккаунт');
       }
 
-      await _supabase
-          .from('users')
-          .delete()
-          .eq('id', userId)
-          .eq('organization_id', _organizationId);
+      final response = await _supabase.rpc(
+        'delete_user_admin',
+        params: {
+          'user_id': userId,
+          'org_id': _organizationId,
+        },
+      );
+
+      if (response == false) {
+        throw Exception('Пользователь не найден или не удален');
+      }
     } on PostgrestException catch (e) {
       throw Exception('Ошибка удаления пользователя: ${e.message}');
     } catch (e) {
@@ -201,14 +197,13 @@ class UserRepository {
         return getAllUsers();
       }
 
-      final response = await _supabase
-          .from('users')
-          .select()
-          .eq('organization_id', _organizationId)
-          .or(
-            'first_name.ilike.%$query%,last_name.ilike.%$query%,middle_name.ilike.%$query%,phone.ilike.%$query%',
-          )
-          .order('created_at', ascending: false);
+      final response = await _supabase.rpc(
+        'search_users',
+        params: {
+          'org_id': _organizationId,
+          'search_query': query,
+        },
+      );
 
       final users = (response as List)
           .map((json) => UserModel.fromJson(json))
