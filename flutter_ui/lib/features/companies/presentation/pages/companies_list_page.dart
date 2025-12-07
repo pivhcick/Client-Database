@@ -343,7 +343,6 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
                               margin: const EdgeInsets.only(bottom: 12),
                               child: InkWell(
                                 onTap: () {
-                                  // TODO: Navigate to company detail page
                                   context.go('/companies/${company.id}');
                                 },
                                 borderRadius: BorderRadius.circular(12),

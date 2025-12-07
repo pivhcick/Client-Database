@@ -7,6 +7,7 @@ import '../features/users/presentation/pages/users_list_page.dart';
 import '../features/users/presentation/pages/user_form_page.dart';
 import '../features/companies/presentation/pages/companies_list_page.dart';
 import '../features/companies/presentation/pages/company_form_page.dart';
+import '../features/companies/presentation/pages/company_detail_page.dart';
 
 /// Application router configuration
 ///
@@ -71,9 +72,8 @@ class AppRouter {
         path: '/companies/:id',
         name: 'company-detail',
         builder: (context, state) {
-          // TODO: Create CompanyDetailPage in Phase 5
-          // final companyId = state.pathParameters['id'];
-          return const _ComingSoonPage(title: 'Детали компании');
+          final companyId = state.pathParameters['id']!;
+          return CompanyDetailPage(companyId: companyId);
         },
       ),
       GoRoute(
@@ -124,62 +124,6 @@ class AppRouter {
 
     // No redirect needed
     return null;
-  }
-}
-
-/// Coming soon page for features in development
-class _ComingSoonPage extends StatelessWidget {
-  final String title;
-
-  const _ComingSoonPage({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/'),
-        ),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.construction,
-              size: 64,
-              color: Color(0xFF8F9098),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Скоро будет доступно',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Sora',
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Эта функция будет добавлена\nв следующих фазах.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: Color(0xFF8F9098),
-                fontFamily: 'Inter',
-              ),
-            ),
-            const SizedBox(height: 24),
-            TextButton(
-              onPressed: () => context.go('/'),
-              child: const Text('Вернуться на главную'),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 

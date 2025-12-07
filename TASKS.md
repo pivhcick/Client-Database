@@ -163,7 +163,7 @@
 | Добавить Sort dropdown | ⏸️ | Отложено - используем FilterChips |
 | Добавить Filter chips | ✅ | По статусу (Все/Реальный/Потенциальный/Потерянный) |
 | Добавить Pull-to-refresh | ✅ | RefreshIndicator |
-| Создать CompanyDetailPage | ⏳ | Запланировано на Phase 5 |
+| Создать CompanyDetailPage | ✅ | С placeholders для Contact Persons, Records, Reminders |
 | Создать CompanyCreatePage | ✅ | CompanyFormPage (универсальная форма) |
 | Создать CompanyEditPage | ✅ | CompanyFormPage с companyId |
 | Создать CompanyDeleteConfirmationDialog | ✅ | Встроено в CompaniesListPage |
@@ -185,19 +185,20 @@
 ### Flutter - Models & Data
 | Задача | Статус | Примечания |
 |--------|--------|------------|
-| Создать ContactPerson entity | ⏳ | lib/features/companies/domain/entities/contact_person.dart |
-| Создать ContactPersonModel | ⏳ | JSON serialization |
-| Создать ContactPersonRepository | ⏳ | getByCompanyId, create, update, delete |
+| Создать ContactPerson entity | ✅ | lib/features/contacts/domain/entities/contact_person.dart |
+| Создать ContactPersonModel | ✅ | JSON serialization |
+| Создать ContactPersonRepository | ✅ | getByCompanyId, create, update, delete |
 
 ### Flutter - Presentation
 | Задача | Статус | Примечания |
 |--------|--------|------------|
-| Интегрировать ContactPersons в CompanyDetailPage | ⏳ | Список контактных лиц |
-| Создать ContactPersonCreateDialog | ⏳ | Рефакторинг page_25_7938.dart |
-| Создать ContactPersonEditDialog | ⏳ | Рефакторинг page_25_8522.dart |
-| Добавить delete функционал | ⏳ | IconButton в карточке |
-| Валидация форм | ⏳ | Phone mask, required fields |
-| Тестирование CRUD контактных лиц | ⏳ | Add, edit, delete |
+| Создать ContactPersonProvider | ✅ | С state management |
+| Интегрировать ContactPersons в CompanyDetailPage | ✅ | Consumer с ListView |
+| Создать ContactPersonFormDialog | ✅ | Универсальная форма (create/edit) |
+| Добавить delete функционал | ✅ | PopupMenu в карточке |
+| Валидация форм | ✅ | Phone mask, email, required fields |
+| Добавить ContactPersonProvider в main.dart | ✅ | MultiProvider setup |
+| Тестирование CRUD контактных лиц | ⏳ | Требуется после Supabase setup |
 
 ---
 
@@ -211,20 +212,19 @@
 ### Flutter - Models & Data
 | Задача | Статус | Примечания |
 |--------|--------|------------|
-| Создать ContactRecord entity | ⏳ | lib/features/contacts/domain/entities/contact_record.dart |
-| Создать ContactRecordModel | ⏳ | С denormalized user name |
-| Создать ContactRecordRepository | ⏳ | getByCompanyId, create, update |
+| Создать ContactRecord entity | ✅ | lib/features/contacts/domain/entities/contact_record.dart |
+| Создать ContactRecordModel | ✅ | С denormalized user name через JOIN с users |
+| Создать ContactRecordRepository | ✅ | getByCompanyId, create, update, delete |
 
 ### Flutter - Presentation
 | Задача | Статус | Примечания |
 |--------|--------|------------|
-| Интегрировать ContactRecords в CompanyDetailPage | ⏳ | Список записей |
-| Создать ContactRecordCreatePage | ⏳ | Рефакторинг page_26_1872.dart |
-| Создать ContactRecordEditPage | ⏳ | Редактирование content |
-| Добавить auto-create при нажатии "Добавить" | ⏳ | С текущим timestamp и user |
-| Отображать ФИО и timestamp | ⏳ | createdByUserName, createdAt |
-| Проверить auto-update last_contact_date | ⏳ | Должно обновляться в Company |
-| Тестирование записей о контактах | ⏳ | Create, edit |
+| Интегрировать ContactRecords в CompanyDetailPage | ✅ | Consumer с ListView, edit/delete |
+| Создать ContactRecordFormDialog | ✅ | Универсальная форма (create/edit) |
+| Добавить ContactRecordProvider в main.dart | ✅ | MultiProvider setup |
+| Отображать ФИО и timestamp | ✅ | createdByUserName через JOIN, formatted date |
+| Проверить auto-update last_contact_date | ⏳ | Требуется тестирование после Supabase setup |
+| Тестирование записей о контактах | ⏳ | Требуется после Supabase setup |
 
 ---
 
@@ -239,35 +239,35 @@
 ### Flutter - Setup Notifications
 | Задача | Статус | Примечания |
 |--------|--------|------------|
-| Setup flutter_local_notifications | ⏳ | lib/core/utils/notification_helper.dart |
-| Request permissions iOS | ⏳ | Через UIUserNotificationCenter |
-| Request permissions Android | ⏳ | Через AndroidFlutterLocalNotificationsPlugin |
-| Setup notification channels | ⏳ | High importance для Android |
-| Инициализация timezone | ⏳ | tz.initializeTimeZones() |
+| Setup flutter_local_notifications | ✅ | lib/core/utils/notification_helper.dart (уже существовал) |
+| Request permissions iOS | ✅ | Через IOSFlutterLocalNotificationsPlugin |
+| Request permissions Android | ✅ | Автоматически через manifest |
+| Setup notification channels | ✅ | reminders_channel с high importance |
+| Инициализация timezone | ✅ | tz.initializeTimeZones() в NotificationHelper |
 
 ### Flutter - Models & Data
 | Задача | Статус | Примечания |
 |--------|--------|------------|
-| Создать Reminder entity | ⏳ | lib/features/reminders/domain/entities/reminder.dart |
-| Создать ReminderModel | ⏳ | С denormalized company name |
-| Создать ReminderStatus enum | ⏳ | pending, delivered, cancelled |
-| Создать ReminderRepository | ⏳ | getAll, getByCompanyId, create, update, delete |
+| Создать Reminder entity | ✅ | lib/features/reminders/domain/entities/reminder.dart |
+| Создать ReminderModel | ✅ | С denormalized company name через JOIN |
+| Создать ReminderStatus enum | ✅ | pending, delivered, cancelled |
+| Создать ReminderRepository | ✅ | getAllReminders, getByCompanyId, create, update, updateStatus, delete |
 
 ### Flutter - Presentation
 | Задача | Статус | Примечания |
 |--------|--------|------------|
-| Создать ReminderProvider | ⏳ | С scheduling логикой |
-| Интегрировать Reminders в CompanyDetailPage | ⏳ | Список напоминаний |
-| Создать ReminderCreatePage | ⏳ | Рефакторинг page_25_9105.dart |
-| Создать ReminderEditPage | ⏳ | Рефакторинг page_25_9367.dart |
-| Добавить DateTimePicker | ⏳ | Выбор даты и времени |
-| Реализовать schedule notification | ⏳ | zonedSchedule() |
-| Реализовать cancel notification | ⏳ | При delete или cancel |
-| Создать NotificationsPage | ⏳ | Рефакторинг page_25_3216.dart |
-| Показывать delivered reminders | ⏳ | WHERE status = 'delivered' |
-| Обновлять status на delivered при показе | ⏳ | UPDATE status |
-| Добавить Notifications в bottom navigation | ⏳ | С badge count |
-| Тестирование уведомлений | ⏳ | Schedule, delivery, cancel |
+| Создать ReminderProvider | ✅ | С автоматическим scheduling/canceling уведомлений |
+| Интегрировать Reminders в CompanyDetailPage | ✅ | Consumer с ListView, edit/cancel/delete |
+| Создать ReminderFormDialog | ✅ | Универсальная форма (create/edit) |
+| Добавить DateTimePicker | ✅ | showDatePicker + showTimePicker |
+| Реализовать schedule notification | ✅ | zonedSchedule() в ReminderProvider |
+| Реализовать cancel notification | ✅ | При delete или cancel статуса |
+| Добавить ReminderProvider в main.dart | ✅ | MultiProvider с NotificationHelper |
+| Создать NotificationsPage | ⏸️ | Отложено - опциональная фича |
+| Показывать delivered reminders | ⏸️ | Отложено - опциональная фича |
+| Обновлять status на delivered при показе | ⏸️ | Отложено - опциональная фича |
+| Добавить Notifications в bottom navigation | ⏸️ | Отложено - опциональная фича |
+| Тестирование уведомлений | ⏳ | Требуется после Supabase setup |
 
 ---
 
@@ -363,4 +363,4 @@
 - **В процессе:** 0
 - **Осталось:** TBD
 
-**Последнее обновление:** 2025-12-07 (Фаза 4 завершена)
+**Последнее обновление:** 2025-12-07 (Фаза 7 завершена: Reminders + Notifications)

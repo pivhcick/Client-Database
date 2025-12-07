@@ -12,6 +12,13 @@ import 'features/users/data/repositories/user_repository.dart';
 import 'features/users/presentation/providers/user_provider.dart';
 import 'features/companies/data/repositories/company_repository.dart';
 import 'features/companies/presentation/providers/company_provider.dart';
+import 'features/contacts/data/repositories/contact_person_repository.dart';
+import 'features/contacts/presentation/providers/contact_person_provider.dart';
+import 'features/contacts/data/repositories/contact_record_repository.dart';
+import 'features/contacts/presentation/providers/contact_record_provider.dart';
+import 'features/reminders/data/repositories/reminder_repository.dart';
+import 'features/reminders/presentation/providers/reminder_provider.dart';
+import 'core/utils/notification_helper.dart';
 import 'app.dart';
 
 /// Application entry point
@@ -43,6 +50,11 @@ void main() async {
 
   // Initialize secure storage
   final secureStorage = SecureStorage();
+
+  // Initialize notifications
+  final notificationHelper = NotificationHelper();
+  await notificationHelper.init();
+  await notificationHelper.requestPermissions();
 
   // Create repositories
   final authRepository = AuthRepository(
@@ -98,8 +110,38 @@ void main() async {
           },
         ),
 
-        // TODO: Add more providers in future phases:
-        // - ChangeNotifierProvider(create: (_) => ReminderProvider(...))
+        // ContactPersonProvider (does not depend on organization_id)
+        ChangeNotifierProvider(
+          create: (_) {
+            final contactPersonRepository = ContactPersonRepository(
+              supabase: Supabase.instance.client,
+            );
+            return ContactPersonProvider(repository: contactPersonRepository);
+          },
+        ),
+
+        // ContactRecordProvider (does not depend on organization_id)
+        ChangeNotifierProvider(
+          create: (_) {
+            final contactRecordRepository = ContactRecordRepository(
+              supabase: Supabase.instance.client,
+            );
+            return ContactRecordProvider(repository: contactRecordRepository);
+          },
+        ),
+
+        // ReminderProvider (does not depend on organization_id)
+        ChangeNotifierProvider(
+          create: (_) {
+            final reminderRepository = ReminderRepository(
+              supabase: Supabase.instance.client,
+            );
+            return ReminderProvider(
+              repository: reminderRepository,
+              notificationHelper: notificationHelper,
+            );
+          },
+        ),
       ],
       child: const App(),
     ),
