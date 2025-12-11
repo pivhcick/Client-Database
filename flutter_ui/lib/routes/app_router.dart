@@ -42,6 +42,13 @@ class AppRouter {
         builder: (context, state) => const CompaniesListPage(),
       ),
 
+      // Companies list (same as home, but accessible via /companies)
+      GoRoute(
+        path: '/companies',
+        name: 'companies',
+        builder: (context, state) => const CompaniesListPage(),
+      ),
+
       // User management routes (admin only)
       GoRoute(
         path: '/users',

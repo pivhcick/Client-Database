@@ -11,6 +11,7 @@
         "cupertino_icons",
         "flutter",
         "flutter_local_notifications",
+        "flutter_localizations",
         "flutter_secure_storage",
         "flutter_svg",
         "go_router",
@@ -123,7 +124,7 @@
     },
     {
       "name": "intl",
-      "version": "0.19.0",
+      "version": "0.20.2",
       "dependencies": [
         "clock",
         "meta",
@@ -235,6 +236,15 @@
         "supabase",
         "url_launcher",
         "web"
+      ]
+    },
+    {
+      "name": "flutter_localizations",
+      "version": "0.0.0",
+      "dependencies": [
+        "flutter",
+        "intl",
+        "path"
       ]
     },
     {

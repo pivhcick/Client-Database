@@ -48,7 +48,23 @@ class _ContactPersonFormDialogState extends State<ContactPersonFormDialog> {
       _firstNameController.text = widget.contactPerson!.firstName;
       _middleNameController.text = widget.contactPerson!.middleName;
       _positionController.text = widget.contactPerson!.position;
-      _phoneController.text = widget.contactPerson!.phone;
+
+      // Extract only digits from phone number (remove +7 and any formatting)
+      final digitsOnly = widget.contactPerson!.phone.replaceAll(RegExp(r'[^\d]'), '');
+      // Remove leading 7 if present to get the 10 digits for the mask
+      final phoneDigits = digitsOnly.startsWith('7')
+          ? digitsOnly.substring(1)
+          : digitsOnly;
+
+      // Apply mask to the phone digits
+      final maskedPhone = _phoneMaskFormatter.formatEditUpdate(
+        const TextEditingValue(text: ''),
+        TextEditingValue(text: phoneDigits),
+      );
+
+      // Set formatted phone to controller
+      _phoneController.value = maskedPhone;
+
       _emailController.text = widget.contactPerson!.email ?? '';
     }
   }

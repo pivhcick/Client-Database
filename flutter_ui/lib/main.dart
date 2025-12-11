@@ -52,9 +52,14 @@ void main() async {
   final secureStorage = SecureStorage();
 
   // Initialize notifications
+  print('🔔 Initializing notifications...');
   final notificationHelper = NotificationHelper();
   await notificationHelper.init();
-  await notificationHelper.requestPermissions();
+  print('✅ Notifications initialized');
+
+  print('🔔 Requesting notification permissions...');
+  final permissionsGranted = await notificationHelper.requestPermissions();
+  print('✅ Notification permissions: ${permissionsGranted ? "GRANTED" : "DENIED"}');
 
   // Create repositories
   final authRepository = AuthRepository(

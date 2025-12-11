@@ -49,6 +49,9 @@ class ReminderProvider extends ChangeNotifier {
     try {
       _reminders = await _repository.getAllReminders(userId);
       _hasError = false;
+
+      // Update expired reminders to delivered status
+      await _updateExpiredReminders();
     } catch (e) {
       _hasError = true;
       _errorMessage = e.toString().replaceAll('Exception: ', '');
@@ -70,6 +73,9 @@ class ReminderProvider extends ChangeNotifier {
     try {
       _reminders = await _repository.getByCompanyId(companyId);
       _hasError = false;
+
+      // Update expired reminders to delivered status
+      await _updateExpiredReminders();
     } catch (e) {
       _hasError = true;
       _errorMessage = e.toString().replaceAll('Exception: ', '');
@@ -186,13 +192,58 @@ class ReminderProvider extends ChangeNotifier {
     await refreshReminders();
   }
 
+  /// Update expired pending reminders to delivered status
+  Future<void> _updateExpiredReminders() async {
+    final now = DateTime.now();
+    final expiredReminders = _reminders.where((reminder) =>
+        reminder.status == ReminderStatus.pending &&
+        reminder.scheduledFor.isBefore(now)).toList();
+
+    if (expiredReminders.isEmpty) {
+      return;
+    }
+
+    print('🔄 Found ${expiredReminders.length} expired reminders, updating to delivered...');
+
+    // Update each expired reminder
+    for (final reminder in expiredReminders) {
+      try {
+        await _repository.updateReminderStatus(
+          reminderId: reminder.id,
+          status: ReminderStatus.delivered,
+        );
+        print('✅ Updated reminder ${reminder.id} to delivered');
+      } catch (e) {
+        print('❌ Error updating reminder ${reminder.id}: $e');
+      }
+    }
+
+    // Reload reminders to get updated statuses
+    if (_currentCompanyId != null) {
+      _reminders = await _repository.getByCompanyId(_currentCompanyId!);
+    } else if (_currentUserId != null) {
+      _reminders = await _repository.getAllReminders(_currentUserId!);
+    }
+  }
+
   /// Schedule notification for a reminder
   Future<void> _scheduleNotification(Reminder reminder) async {
+    print('📅 Scheduling notification for reminder:');
+    print('  ID: ${reminder.id}');
+    print('  Notification ID (hashCode): ${reminder.id.hashCode}');
+    print('  Title: ${reminder.title}');
+    print('  Scheduled for: ${reminder.scheduledFor}');
+    print('  Current time: ${DateTime.now()}');
+    print('  Is in future: ${reminder.scheduledFor.isAfter(DateTime.now())}');
+    print('  Status: ${reminder.status}');
+
     // Only schedule if in the future and status is pending
     if (reminder.scheduledFor.isAfter(DateTime.now()) &&
         reminder.status == ReminderStatus.pending) {
       final notificationId = reminder.id.hashCode;
       final companyName = reminder.companyName ?? 'Компания';
+
+      print('✅ Calling notificationHelper.scheduleNotification...');
 
       await _notificationHelper.scheduleNotification(
         id: notificationId,
@@ -201,6 +252,23 @@ class ReminderProvider extends ChangeNotifier {
         scheduledDate: reminder.scheduledFor,
         payload: reminder.id,
       );
+
+      print('✅ Notification scheduled successfully');
+
+      // Check pending notifications
+      final pending = await _notificationHelper.getPendingNotifications();
+      print('📋 Total pending notifications: ${pending.length}');
+      for (final p in pending) {
+        print('  - [${p.id}] ${p.title} - ${p.body}');
+      }
+    } else {
+      print('⚠️ Notification NOT scheduled:');
+      if (!reminder.scheduledFor.isAfter(DateTime.now())) {
+        print('  Reason: Time is in the past');
+      }
+      if (reminder.status != ReminderStatus.pending) {
+        print('  Reason: Status is not pending (${reminder.status})');
+      }
     }
   }
 

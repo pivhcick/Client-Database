@@ -212,6 +212,12 @@
       "languageVersion": "2.17"
     },
     {
+      "name": "flutter_localizations",
+      "rootUri": "file:///Users/beer_andrey/Flutter_SDK/flutter/packages/flutter_localizations",
+      "packageUri": "lib/",
+      "languageVersion": "3.8"
+    },
+    {
       "name": "flutter_secure_storage",
       "rootUri": "file:///Users/beer_andrey/.pub-cache/hosted/pub.dev/flutter_secure_storage-9.2.4",
       "packageUri": "lib/",
@@ -345,9 +351,9 @@
     },
     {
       "name": "intl",
-      "rootUri": "file:///Users/beer_andrey/.pub-cache/hosted/pub.dev/intl-0.19.0",
+      "rootUri": "file:///Users/beer_andrey/.pub-cache/hosted/pub.dev/intl-0.20.2",
       "packageUri": "lib/",
-      "languageVersion": "3.0"
+      "languageVersion": "3.3"
     },
     {
       "name": "io",

@@ -18,10 +18,78 @@ class NotificationHelper {
 
   /// Initialize notifications
   Future<void> init() async {
-    if (_initialized) return;
+    if (_initialized) {
+      print('⚠️ NotificationHelper already initialized');
+      return;
+    }
 
+    print('🔔 Initializing timezone data...');
     // Initialize timezone
     tz.initializeTimeZones();
+
+    // ✅ Установить локальную временную зону устройства
+    final String timeZoneName = DateTime.now().timeZoneName;
+    print('🔔 Device timezone name: $timeZoneName');
+
+    // iOS и некоторые платформы возвращают аббревиатуры (MSK, GMT+3),
+    // которые не работают с timezone package.
+    // Пробуем несколько способов определить timezone:
+    try {
+      // Сначала пробуем по имени (работает на Android и некоторых платформах)
+      tz.setLocalLocation(tz.getLocation(timeZoneName));
+      print('✅ Timezone set to: ${tz.local.name}');
+    } catch (e) {
+      print('⚠️ Could not set timezone by name "$timeZoneName": $e');
+
+      // Если не получилось, определяем по offset
+      final offset = DateTime.now().timeZoneOffset;
+      final offsetHours = offset.inHours;
+      print('🔔 Device timezone offset: GMT${offsetHours >= 0 ? '+' : ''}$offsetHours');
+
+      // Mapping основных часовых поясов по offset
+      // Примечание: это упрощенный mapping, не учитывает DST
+      final Map<int, String> timezoneByOffset = {
+        -12: 'Etc/GMT+12',
+        -11: 'Pacific/Midway',
+        -10: 'Pacific/Honolulu',
+        -9: 'America/Anchorage',
+        -8: 'America/Los_Angeles',
+        -7: 'America/Denver',
+        -6: 'America/Chicago',
+        -5: 'America/New_York',
+        -4: 'America/Halifax',
+        -3: 'America/Sao_Paulo',
+        -2: 'Atlantic/South_Georgia',
+        -1: 'Atlantic/Azores',
+        0: 'Europe/London',
+        1: 'Europe/Paris',
+        2: 'Europe/Helsinki',
+        3: 'Europe/Moscow',
+        4: 'Asia/Dubai',
+        5: 'Asia/Karachi',
+        6: 'Asia/Dhaka',
+        7: 'Asia/Bangkok',
+        8: 'Asia/Shanghai',
+        9: 'Asia/Tokyo',
+        10: 'Australia/Sydney',
+        11: 'Pacific/Noumea',
+        12: 'Pacific/Auckland',
+      };
+
+      final timezoneName = timezoneByOffset[offsetHours];
+      if (timezoneName != null) {
+        try {
+          tz.setLocalLocation(tz.getLocation(timezoneName));
+          print('✅ Timezone set to: $timezoneName (by offset)');
+        } catch (e2) {
+          print('⚠️ Could not set $timezoneName, using UTC: $e2');
+        }
+      } else {
+        print('⚠️ Unknown offset GMT$offsetHours, using UTC');
+      }
+    }
+
+    print('✅ Timezone initialized: ${tz.local.name}');
 
     // Android initialization settings
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -31,6 +99,10 @@ class NotificationHelper {
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
+      // ✅ Показывать уведомления даже когда приложение активно
+      defaultPresentAlert: true,
+      defaultPresentBadge: true,
+      defaultPresentSound: true,
     );
 
     // Initialization settings
@@ -39,27 +111,37 @@ class NotificationHelper {
       iOS: iosSettings,
     );
 
+    print('🔔 Initializing flutter_local_notifications plugin...');
     // Initialize
-    await _notifications.initialize(
+    final initialized = await _notifications.initialize(
       initSettings,
       onDidReceiveNotificationResponse: _onNotificationTapped,
     );
+    print('✅ Plugin initialized: $initialized');
 
     _initialized = true;
   }
 
   /// Request permissions (iOS)
   Future<bool> requestPermissions() async {
-    final result = await _notifications
+    print('🔔 Requesting iOS notification permissions...');
+    final iosPlugin = _notifications
         .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>()
-        ?.requestPermissions(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
+            IOSFlutterLocalNotificationsPlugin>();
 
-    return result ?? true; // Android doesn't need runtime permissions
+    if (iosPlugin == null) {
+      print('⚠️ iOS plugin not available (probably running on Android/Web)');
+      return true; // Android doesn't need runtime permissions
+    }
+
+    final result = await iosPlugin.requestPermissions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    print('✅ iOS permissions result: $result');
+    return result ?? true;
   }
 
   /// Schedule a notification
@@ -70,6 +152,33 @@ class NotificationHelper {
     required DateTime scheduledDate,
     String? payload,
   }) async {
+    print('🔔 NotificationHelper.scheduleNotification called:');
+    print('  Notification ID: $id');
+    print('  Title: $title');
+    print('  Body: $body');
+    print('  Scheduled date (input): $scheduledDate');
+    print('  Current timezone: ${tz.local.name}');
+    print('  Current time: ${DateTime.now()}');
+
+    // ✅ Правильная конвертация локального времени в TZDateTime
+    // scheduledDate - это локальное время устройства без timezone info
+    // Нужно создать TZDateTime с теми же компонентами (год, месяц, день, час, минута)
+    // но в правильной timezone
+    final tzScheduledDate = tz.TZDateTime(
+      tz.local,
+      scheduledDate.year,
+      scheduledDate.month,
+      scheduledDate.day,
+      scheduledDate.hour,
+      scheduledDate.minute,
+      scheduledDate.second,
+    );
+
+    print('  TZ scheduled date: $tzScheduledDate');
+    print('  TZ current time: ${tz.TZDateTime.now(tz.local)}');
+    print('  Time difference: ${tzScheduledDate.difference(tz.TZDateTime.now(tz.local)).inMinutes} minutes');
+    print('  Payload: $payload');
+
     // Notification details
     const androidDetails = AndroidNotificationDetails(
       'reminders_channel',
@@ -91,18 +200,24 @@ class NotificationHelper {
       iOS: iosDetails,
     );
 
-    // Schedule
-    await _notifications.zonedSchedule(
-      id,
-      title,
-      body,
-      tz.TZDateTime.from(scheduledDate, tz.local),
-      notificationDetails,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      payload: payload,
-    );
+    try {
+      // Schedule
+      await _notifications.zonedSchedule(
+        id,
+        title,
+        body,
+        tzScheduledDate,
+        notificationDetails,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        payload: payload,
+      );
+      print('✅ zonedSchedule completed successfully');
+    } catch (e) {
+      print('❌ Error scheduling notification: $e');
+      rethrow;
+    }
   }
 
   /// Show immediate notification
@@ -112,6 +227,18 @@ class NotificationHelper {
     required String body,
     String? payload,
   }) async {
+    print('🔔 NotificationHelper.showNotification called:');
+    print('  Notification ID: $id');
+    print('  Title: $title');
+    print('  Body: $body');
+    print('  Payload: $payload');
+    print('  Initialized: $_initialized');
+
+    if (!_initialized) {
+      print('❌ ERROR: NotificationHelper not initialized!');
+      return;
+    }
+
     const androidDetails = AndroidNotificationDetails(
       'reminders_channel',
       'Напоминания',
@@ -120,20 +247,31 @@ class NotificationHelper {
       priority: Priority.high,
     );
 
-    const iosDetails = DarwinNotificationDetails();
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
 
     const notificationDetails = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
 
-    await _notifications.show(
-      id,
-      title,
-      body,
-      notificationDetails,
-      payload: payload,
-    );
+    try {
+      print('🔔 Calling _notifications.show()...');
+      await _notifications.show(
+        id,
+        title,
+        body,
+        notificationDetails,
+        payload: payload,
+      );
+      print('✅ _notifications.show() completed successfully');
+    } catch (e) {
+      print('❌ Error showing notification: $e');
+      rethrow;
+    }
   }
 
   /// Cancel a notification

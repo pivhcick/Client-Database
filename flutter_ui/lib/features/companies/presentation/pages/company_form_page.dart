@@ -66,7 +66,23 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
       setState(() {
         _existingCompany = company;
         _nameController.text = company.name;
-        _phoneController.text = company.phone.replaceFirst('+7', '');
+
+        // Extract only digits from phone number (remove +7 and any formatting)
+        final digitsOnly = company.phone.replaceAll(RegExp(r'[^\d]'), '');
+        // Remove leading 7 if present to get the 10 digits for the mask
+        final phoneDigits = digitsOnly.startsWith('7')
+            ? digitsOnly.substring(1)
+            : digitsOnly;
+
+        // Apply mask to the phone digits
+        final maskedPhone = _phoneMaskFormatter.formatEditUpdate(
+          const TextEditingValue(text: ''),
+          TextEditingValue(text: phoneDigits),
+        );
+
+        // Set formatted phone to controller
+        _phoneController.value = maskedPhone;
+
         _emailController.text = company.email ?? '';
         _addressController.text = company.address;
         _contentController.text = company.content ?? '';

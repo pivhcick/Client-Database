@@ -122,6 +122,10 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/companies'),
+        ),
         title: const Text('Информация о компании'),
         actions: _company != null
             ? [

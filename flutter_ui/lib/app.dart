@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'core/config/theme.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
@@ -22,6 +23,16 @@ class App extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
           routerConfig: router,
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('ru', 'RU'),
+            Locale('en', 'US'),
+          ],
+          locale: const Locale('ru', 'RU'),
         );
       },
     );

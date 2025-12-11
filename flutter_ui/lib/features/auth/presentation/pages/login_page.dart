@@ -36,6 +36,10 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _handleLogin() async {
+    // Clear previous errors
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    authProvider.clearError();
+
     // Validate form
     if (!_formKey.currentState!.validate()) {
       return;
@@ -46,7 +50,6 @@ class _LoginPageState extends State<LoginPage> {
     final password = _passwordController.text;
 
     // Login
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
     try {
       await authProvider.login(
         phone: '+7$phone',
@@ -56,27 +59,15 @@ class _LoginPageState extends State<LoginPage> {
       // Navigation handled by GoRouter redirect
     } catch (e) {
       // Error is already set in AuthProvider
-      // Show error dialog
-      if (mounted) {
-        _showErrorDialog(authProvider.errorMessage ?? 'Ошибка входа');
-      }
+      // UI will show it via Consumer
     }
   }
 
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Ошибка'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
+  void _clearErrorOnTyping() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.hasError) {
+      authProvider.clearError();
+    }
   }
 
   @override
@@ -128,6 +119,7 @@ class _LoginPageState extends State<LoginPage> {
                       Icons.phone_outlined,
                       color: Color(0xFF8F9098),
                     ),
+                    onChanged: (_) => _clearErrorOnTyping(),
                   ),
                   const SizedBox(height: 16),
 
@@ -155,6 +147,7 @@ class _LoginPageState extends State<LoginPage> {
                         });
                       },
                     ),
+                    onChanged: (_) => _clearErrorOnTyping(),
                   ),
                   const SizedBox(height: 8),
 
@@ -177,6 +170,51 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 24),
+
+                  // Error message display
+                  Consumer<AuthProvider>(
+                    builder: (context, authProvider, child) {
+                      if (authProvider.hasError && authProvider.errorMessage != null) {
+                        return Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFEBEE),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: const Color(0xFFEF5350),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.error_outline,
+                                    color: Color(0xFFEF5350),
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      authProvider.errorMessage!,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Color(0xFFD32F2F),
+                                        fontFamily: 'Inter',
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
+                  ),
 
                   // Login button
                   Consumer<AuthProvider>(

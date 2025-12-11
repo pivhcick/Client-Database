@@ -114,7 +114,7 @@ class UserRepository {
   /// Update user
   ///
   /// Only admin can update users.
-  /// Password update is not supported through this method (security).
+  /// Supports updating phone, name, email, role, and password.
   Future<entities.User> updateUser({
     required String userId,
     String? phone,
@@ -123,7 +123,7 @@ class UserRepository {
     String? middleName,
     String? email,
     entities.UserRole? role,
-    String? newPassword, // Deprecated - not used
+    String? newPassword,
   }) async {
     try {
       final response = await _supabase.rpc(
@@ -131,11 +131,13 @@ class UserRepository {
         params: {
           'user_id': userId,
           'org_id': _organizationId,
+          'user_phone': phone,
           'user_first_name': firstName,
           'user_last_name': lastName,
           'user_middle_name': middleName,
           'user_email': email,
           'user_role': role?.value,
+          'user_password': newPassword,
         },
       );
 

@@ -54,33 +54,76 @@ class _ReminderFormDialogState extends State<ReminderFormDialog> {
     final now = DateTime.now();
     final initialDate = _selectedDateTime ?? now.add(const Duration(hours: 1));
 
-    // Select date
+    // Select date with manual input by default
     final selectedDate = await showDatePicker(
       context: context,
       initialDate: initialDate.isAfter(now) ? initialDate : now,
       firstDate: now,
       lastDate: now.add(const Duration(days: 365)),
       locale: const Locale('ru'),
+      initialEntryMode: DatePickerEntryMode.input, // ✅ Ручной ввод по умолчанию
     );
 
     if (selectedDate == null || !mounted) return;
 
-    // Select time
+    // Select time with 24-hour format and manual input
     final selectedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(initialDate),
+      initialEntryMode: TimePickerEntryMode.input, // ✅ Ручной ввод времени по умолчанию
+      builder: (context, child) {
+        // ✅ Принудительно включаем 24-часовой формат
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+          child: child!,
+        );
+      },
     );
 
     if (selectedTime == null || !mounted) return;
 
-    setState(() {
-      _selectedDateTime = DateTime(
-        selectedDate.year,
-        selectedDate.month,
-        selectedDate.day,
-        selectedTime.hour,
-        selectedTime.minute,
+    // Construct the selected datetime
+    final newDateTime = DateTime(
+      selectedDate.year,
+      selectedDate.month,
+      selectedDate.day,
+      selectedTime.hour,
+      selectedTime.minute,
+    );
+
+    // Validate that selected datetime is not in the past
+    if (newDateTime.isBefore(DateTime.now())) {
+      if (!mounted) return;
+
+      // Show error dialog
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Ошибка'),
+          content: const Text(
+            'Нельзя выбрать дату и время в прошлом. '
+            'Пожалуйста, выберите дату и время в будущем.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
       );
+
+      // Clear the error message and don't set the invalid datetime
+      setState(() {
+        _errorMessage = null;
+      });
+
+      return;
+    }
+
+    setState(() {
+      _selectedDateTime = newDateTime;
+      _errorMessage = null; // Clear any previous error
     });
   }
 
