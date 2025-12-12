@@ -15,6 +15,7 @@ import '../../../reminders/presentation/providers/reminder_provider.dart';
 import '../../../reminders/presentation/widgets/reminder_form_dialog.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/widgets/phone_number_link.dart';
 
 /// Company detail page
 ///
@@ -102,20 +103,8 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
   }
 
   String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-
-    if (difference.inDays == 0) {
-      return 'Сегодня';
-    } else if (difference.inDays == 1) {
-      return 'Вчера';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays} дн. назад';
-    } else if (difference.inDays < 30) {
-      return '${(difference.inDays / 7).floor()} нед. назад';
-    } else {
-      return '${date.day}.${date.month}.${date.year}';
-    }
+    final dateFormat = DateFormat('dd.MM.yyyy HH:mm');
+    return dateFormat.format(date);
   }
 
   @override
@@ -246,7 +235,7 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
               ],
             ),
             const Divider(height: 32),
-            _buildInfoRow(Icons.phone, 'Телефон', _company!.phone),
+            _buildPhoneRow(Icons.phone, 'Телефон', _company!.phone),
             if (_company!.email != null) ...[
               const SizedBox(height: 12),
               _buildInfoRow(Icons.email, 'Email', _company!.email!),
@@ -314,6 +303,45 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
                 value,
                 style: const TextStyle(
                   fontSize: 14,
+                  fontFamily: 'Inter',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPhoneRow(IconData icon, String label, String phoneNumber) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          icon,
+          size: 20,
+          color: const Color(0xFF8F9098),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF8F9098),
+                  fontFamily: 'Inter',
+                ),
+              ),
+              const SizedBox(height: 2),
+              PhoneNumberLink(
+                phoneNumber: phoneNumber,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF006FFD),
+                  decoration: TextDecoration.underline,
                   fontFamily: 'Inter',
                 ),
               ),

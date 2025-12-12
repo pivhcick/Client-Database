@@ -1,9 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/entities/company.dart';
 import '../providers/company_provider.dart';
+import '../../data/repositories/company_repository.dart';
+import '../../../../core/widgets/phone_number_link.dart';
+
+/// Sort option for dropdown
+enum SortOption {
+  nameAsc('А-Я ↑', CompanySortField.name, SortDirection.ascending),
+  nameDesc('А-Я ↓', CompanySortField.name, SortDirection.descending),
+  lastContactDesc('Посл. контакт ↓', CompanySortField.lastContactDate, SortDirection.descending),
+  lastContactAsc('Посл. контакт ↑', CompanySortField.lastContactDate, SortDirection.ascending);
+
+  final String label;
+  final CompanySortField field;
+  final SortDirection direction;
+
+  const SortOption(this.label, this.field, this.direction);
+
+  static SortOption fromFieldAndDirection(CompanySortField field, SortDirection direction) {
+    return SortOption.values.firstWhere(
+      (option) => option.field == field && option.direction == direction,
+      orElse: () => SortOption.nameAsc,
+    );
+  }
+}
 
 /// Companies list page
 ///
@@ -212,49 +236,223 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
                   ),
                 ),
 
-                // Status filter chips
-                Consumer<CompanyProvider>(
-                  builder: (context, provider, _) {
-                    return SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(
-                        children: [
-                          FilterChip(
-                            label: const Text('Все'),
-                            selected: provider.statusFilter == null,
-                            onSelected: (_) => provider.clearStatusFilter(),
-                            selectedColor: const Color(0xFF006FFD).withOpacity(0.2),
-                          ),
-                          const SizedBox(width: 8),
-                          FilterChip(
-                            label: const Text('Реальный'),
-                            selected: provider.statusFilter == CompanyStatus.real,
-                            onSelected: (_) =>
-                                provider.setStatusFilter(CompanyStatus.real),
-                            selectedColor: const Color(0xFF00C48C).withOpacity(0.2),
-                          ),
-                          const SizedBox(width: 8),
-                          FilterChip(
-                            label: const Text('Потенциальный'),
-                            selected:
-                                provider.statusFilter == CompanyStatus.potential,
-                            onSelected: (_) =>
-                                provider.setStatusFilter(CompanyStatus.potential),
-                            selectedColor: const Color(0xFF006FFD).withOpacity(0.2),
-                          ),
-                          const SizedBox(width: 8),
-                          FilterChip(
-                            label: const Text('Потерянный'),
-                            selected: provider.statusFilter == CompanyStatus.lost,
-                            onSelected: (_) =>
-                                provider.setStatusFilter(CompanyStatus.lost),
-                            selectedColor: const Color(0xFFF53178).withOpacity(0.2),
-                          ),
-                        ],
+                // Status filter and Sort dropdown row
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      // Status filter
+                      const Text(
+                        'Статус:',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Inter',
+                        ),
                       ),
-                    );
-                  },
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Consumer<CompanyProvider>(
+                          builder: (context, provider, _) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: const Color(0xFFC5C6CC),
+                                  width: 1,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: DropdownButton<CompanyStatus?>(
+                                value: provider.statusFilter,
+                                isExpanded: true,
+                                underline: const SizedBox.shrink(),
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'Inter',
+                                  color: Colors.black,
+                                ),
+                                hint: const Text(
+                                  'Все',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Inter',
+                                  ),
+                                ),
+                                items: [
+                                  const DropdownMenuItem<CompanyStatus?>(
+                                    value: null,
+                                    child: Text(
+                                      'Все',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'Inter',
+                                      ),
+                                    ),
+                                  ),
+                                  DropdownMenuItem<CompanyStatus?>(
+                                    value: CompanyStatus.real,
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 12,
+                                          height: 12,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF00C48C),
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        const Flexible(
+                                          child: Text(
+                                            'Реальный',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              fontFamily: 'Inter',
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  DropdownMenuItem<CompanyStatus?>(
+                                    value: CompanyStatus.potential,
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 12,
+                                          height: 12,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF006FFD),
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        const Flexible(
+                                          child: Text(
+                                            'Потенциальный',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              fontFamily: 'Inter',
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  DropdownMenuItem<CompanyStatus?>(
+                                    value: CompanyStatus.lost,
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 12,
+                                          height: 12,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFF53178),
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        const Flexible(
+                                          child: Text(
+                                            'Потерянный',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              fontFamily: 'Inter',
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                                onChanged: (CompanyStatus? newValue) {
+                                  if (newValue == null) {
+                                    provider.clearStatusFilter();
+                                  } else {
+                                    provider.setStatusFilter(newValue);
+                                  }
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      // Sort dropdown
+                      const Text(
+                        'Сортировка:',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Inter',
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Consumer<CompanyProvider>(
+                          builder: (context, provider, _) {
+                            final currentOption = SortOption.fromFieldAndDirection(
+                              provider.sortField,
+                              provider.sortDirection,
+                            );
+
+                            return Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: const Color(0xFFC5C6CC),
+                                  width: 1,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: DropdownButton<SortOption>(
+                                value: currentOption,
+                                isExpanded: true,
+                                underline: const SizedBox.shrink(),
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  fontFamily: 'Inter',
+                                  color: Colors.black,
+                                ),
+                                items: SortOption.values.map((option) {
+                                  return DropdownMenuItem<SortOption>(
+                                    value: option,
+                                    child: Text(
+                                      option.label,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'Inter',
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (SortOption? newValue) {
+                                  if (newValue != null) {
+                                    provider.setSorting(
+                                      newValue.field,
+                                      newValue.direction,
+                                    );
+                                  }
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
 
                 const SizedBox(height: 16),
@@ -420,23 +618,16 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
                                         ],
                                       ),
                                       const SizedBox(height: 8),
-                                      Row(
-                                        children: [
-                                          const Icon(
-                                            Icons.phone,
-                                            size: 14,
-                                            color: Color(0xFF8F9098),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            company.phone,
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              color: Color(0xFF8F9098),
-                                              fontFamily: 'Inter',
-                                            ),
-                                          ),
-                                        ],
+                                      PhoneNumberLink(
+                                        phoneNumber: company.phone,
+                                        icon: Icons.phone,
+                                        iconSize: 14,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF006FFD),
+                                          decoration: TextDecoration.underline,
+                                          fontFamily: 'Inter',
+                                        ),
                                       ),
                                       const SizedBox(height: 4),
                                       Row(
@@ -511,18 +702,18 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const CircleAvatar(
-                          radius: 32,
+                          radius: 28,
                           backgroundColor: Colors.white,
                           child: Icon(
                             Icons.person,
-                            size: 32,
+                            size: 28,
                             color: Color(0xFF006FFD),
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 12),
                         Text(
                           authProvider.currentUser?.fullName ?? '',
                           style: const TextStyle(
@@ -531,6 +722,8 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
                             fontWeight: FontWeight.w600,
                             fontFamily: 'Inter',
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -540,6 +733,8 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
                             fontSize: 12,
                             fontFamily: 'Inter',
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
@@ -580,19 +775,7 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
   }
 
   String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-
-    if (difference.inDays == 0) {
-      return 'Сегодня';
-    } else if (difference.inDays == 1) {
-      return 'Вчера';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays} дн. назад';
-    } else if (difference.inDays < 30) {
-      return '${(difference.inDays / 7).floor()} нед. назад';
-    } else {
-      return '${date.day}.${date.month}.${date.year}';
-    }
+    final dateFormat = DateFormat('dd.MM.yyyy HH:mm');
+    return dateFormat.format(date);
   }
 }

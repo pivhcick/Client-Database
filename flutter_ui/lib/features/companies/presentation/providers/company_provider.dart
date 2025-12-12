@@ -18,6 +18,7 @@ class CompanyProvider extends ChangeNotifier {
   String? _errorMessage;
 
   // Filter and sort state
+  String _searchQuery = '';
   CompanyStatus? _statusFilter;
   CompanySortField _sortField = CompanySortField.createdAt;
   SortDirection _sortDirection = SortDirection.descending;
@@ -132,15 +133,43 @@ class CompanyProvider extends ChangeNotifier {
     await loadCompanies();
   }
 
-  /// Search companies
+  /// Search companies with combined filter
   Future<void> searchCompanies(String query) async {
+    _searchQuery = query;
+    await _applyFilters();
+  }
+
+  /// Apply combined search, status filter, and sorting
+  Future<void> _applyFilters() async {
     _isLoading = true;
     _hasError = false;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      _companies = await _companyRepository.searchCompanies(query);
+      List<Company> result;
+
+      // If there's a search query, use search
+      if (_searchQuery.isNotEmpty) {
+        result = await _companyRepository.searchCompanies(_searchQuery);
+      } else {
+        // Otherwise load all companies
+        result = await _companyRepository.getCompaniesFiltered(
+          statusFilter: null, // Don't filter in repository
+          sortField: _sortField,
+          sortDirection: _sortDirection,
+        );
+      }
+
+      // Apply status filter locally if set
+      if (_statusFilter != null) {
+        result = result.where((c) => c.status == _statusFilter).toList();
+      }
+
+      // Apply sorting locally (important for search results)
+      result = _sortCompanies(result);
+
+      _companies = result;
       _hasError = false;
     } catch (e) {
       _hasError = true;
@@ -152,23 +181,58 @@ class CompanyProvider extends ChangeNotifier {
     }
   }
 
-  /// Set status filter
+  /// Sort companies locally based on current sort settings
+  List<Company> _sortCompanies(List<Company> companies) {
+    final sorted = List<Company>.from(companies);
+
+    sorted.sort((a, b) {
+      int comparison;
+
+      switch (_sortField) {
+        case CompanySortField.name:
+          comparison = a.name.toLowerCase().compareTo(b.name.toLowerCase());
+          break;
+        case CompanySortField.lastContactDate:
+          // Handle null last_contact_date
+          if (a.lastContactDate == null && b.lastContactDate == null) {
+            comparison = 0;
+          } else if (a.lastContactDate == null) {
+            comparison = 1; // null values go to the end
+          } else if (b.lastContactDate == null) {
+            comparison = -1;
+          } else {
+            comparison = a.lastContactDate!.compareTo(b.lastContactDate!);
+          }
+          break;
+        case CompanySortField.createdAt:
+          comparison = a.createdAt.compareTo(b.createdAt);
+          break;
+      }
+
+      // Apply sort direction
+      return _sortDirection == SortDirection.ascending ? comparison : -comparison;
+    });
+
+    return sorted;
+  }
+
+  /// Set status filter and reapply filters
   void setStatusFilter(CompanyStatus? status) {
     _statusFilter = status;
-    loadCompanies();
+    _applyFilters();
   }
 
-  /// Clear status filter
+  /// Clear status filter and reapply filters
   void clearStatusFilter() {
     _statusFilter = null;
-    loadCompanies();
+    _applyFilters();
   }
 
-  /// Set sort field and direction
+  /// Set sort field and direction, then reapply filters
   void setSorting(CompanySortField field, SortDirection direction) {
     _sortField = field;
     _sortDirection = direction;
-    loadCompanies();
+    _applyFilters();
   }
 
   /// Toggle sort direction for current field
@@ -176,6 +240,6 @@ class CompanyProvider extends ChangeNotifier {
     _sortDirection = _sortDirection == SortDirection.ascending
         ? SortDirection.descending
         : SortDirection.ascending;
-    loadCompanies();
+    _applyFilters();
   }
 }

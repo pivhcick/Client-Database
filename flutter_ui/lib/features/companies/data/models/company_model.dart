@@ -32,6 +32,16 @@ class CompanyModel {
 
   /// Create model from JSON (Supabase response)
   factory CompanyModel.fromJson(Map<String, dynamic> json) {
+    // Parse timestamps and convert UTC to local time
+    DateTime? lastContactDate;
+    if (json['last_contact_date'] != null) {
+      final lastContactDateUtc = DateTime.parse(json['last_contact_date'] as String);
+      lastContactDate = lastContactDateUtc.toLocal();
+    }
+
+    final createdAtUtc = DateTime.parse(json['created_at'] as String);
+    final createdAtLocal = createdAtUtc.toLocal();
+
     return CompanyModel(
       id: json['id'] as String,
       name: json['name'] as String,
@@ -40,12 +50,10 @@ class CompanyModel {
       address: json['address'] as String,
       status: json['status'] as String,
       content: json['content'] as String?,
-      lastContactDate: json['last_contact_date'] != null
-          ? DateTime.parse(json['last_contact_date'] as String)
-          : null,
+      lastContactDate: lastContactDate,
       organizationId: json['organization_id'] as String,
       createdByUserId: json['created_by_user_id'] as String,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: createdAtLocal,
     );
   }
 

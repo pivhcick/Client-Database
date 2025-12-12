@@ -91,6 +91,28 @@ class NotificationHelper {
 
     print('✅ Timezone initialized: ${tz.local.name}');
 
+    // ✅ CRITICAL: Create Android notification channel BEFORE initialization
+    // Without this, notifications won't work on Android 8.0+ (API 26+)
+    const AndroidNotificationChannel androidChannel = AndroidNotificationChannel(
+      'reminders_channel',
+      'Напоминания',
+      description: 'Напоминания о контактах с компаниями',
+      importance: Importance.high,
+      playSound: true,
+      enableVibration: true,
+      showBadge: true,
+    );
+
+    // Create the channel on Android
+    final AndroidFlutterLocalNotificationsPlugin? androidPlugin =
+        _notifications.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+
+    if (androidPlugin != null) {
+      await androidPlugin.createNotificationChannel(androidChannel);
+      print('✅ Android notification channel created: ${androidChannel.id}');
+    }
+
     // Android initialization settings
     const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
 
@@ -122,26 +144,40 @@ class NotificationHelper {
     _initialized = true;
   }
 
-  /// Request permissions (iOS)
+  /// Request permissions (iOS and Android 13+)
   Future<bool> requestPermissions() async {
-    print('🔔 Requesting iOS notification permissions...');
+    print('🔔 Requesting notification permissions...');
+
+    // Try iOS first
     final iosPlugin = _notifications
         .resolvePlatformSpecificImplementation<
             IOSFlutterLocalNotificationsPlugin>();
 
-    if (iosPlugin == null) {
-      print('⚠️ iOS plugin not available (probably running on Android/Web)');
-      return true; // Android doesn't need runtime permissions
+    if (iosPlugin != null) {
+      print('📱 iOS detected, requesting iOS permissions...');
+      final result = await iosPlugin.requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      print('✅ iOS permissions result: $result');
+      return result ?? true;
     }
 
-    final result = await iosPlugin.requestPermissions(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    // Try Android (for Android 13+ / API 33+)
+    final androidPlugin = _notifications
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
 
-    print('✅ iOS permissions result: $result');
-    return result ?? true;
+    if (androidPlugin != null) {
+      print('🤖 Android detected, requesting Android 13+ permissions...');
+      final result = await androidPlugin.requestNotificationsPermission();
+      print('✅ Android permissions result: $result');
+      return result ?? true;
+    }
+
+    print('⚠️ No platform plugin available');
+    return true;
   }
 
   /// Schedule a notification

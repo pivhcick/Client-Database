@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../../domain/entities/reminder.dart';
 import '../../domain/entities/reminder_status.dart';
@@ -10,12 +11,16 @@ import '../../../../core/utils/notification_helper.dart';
 class ReminderProvider extends ChangeNotifier {
   final ReminderRepository _repository;
   final NotificationHelper _notificationHelper;
+  Timer? _statusUpdateTimer;
 
   ReminderProvider({
     required ReminderRepository repository,
     required NotificationHelper notificationHelper,
   })  : _repository = repository,
-        _notificationHelper = notificationHelper;
+        _notificationHelper = notificationHelper {
+    // Start periodic status check every 30 seconds
+    _startStatusUpdateTimer();
+  }
 
   List<Reminder> _reminders = [];
   bool _isLoading = false;
@@ -51,7 +56,7 @@ class ReminderProvider extends ChangeNotifier {
       _hasError = false;
 
       // Update expired reminders to delivered status
-      await _updateExpiredReminders();
+      await updateExpiredReminders();
     } catch (e) {
       _hasError = true;
       _errorMessage = e.toString().replaceAll('Exception: ', '');
@@ -75,7 +80,7 @@ class ReminderProvider extends ChangeNotifier {
       _hasError = false;
 
       // Update expired reminders to delivered status
-      await _updateExpiredReminders();
+      await updateExpiredReminders();
     } catch (e) {
       _hasError = true;
       _errorMessage = e.toString().replaceAll('Exception: ', '');
@@ -193,36 +198,29 @@ class ReminderProvider extends ChangeNotifier {
   }
 
   /// Update expired pending reminders to delivered status
-  Future<void> _updateExpiredReminders() async {
-    final now = DateTime.now();
-    final expiredReminders = _reminders.where((reminder) =>
-        reminder.status == ReminderStatus.pending &&
-        reminder.scheduledFor.isBefore(now)).toList();
+  /// Call this method manually to force check and update expired reminders
+  ///
+  /// Uses PostgreSQL RPC function for atomic database-level update
+  Future<void> updateExpiredReminders() async {
+    try {
+      print('🔄 Updating expired reminders via database RPC...');
 
-    if (expiredReminders.isEmpty) {
-      return;
-    }
+      // Call database RPC function to update all expired reminders atomically
+      final updatedCount = await _repository.updateExpiredRemindersInDatabase();
 
-    print('🔄 Found ${expiredReminders.length} expired reminders, updating to delivered...');
+      print('✅ Database RPC updated $updatedCount reminders');
 
-    // Update each expired reminder
-    for (final reminder in expiredReminders) {
-      try {
-        await _repository.updateReminderStatus(
-          reminderId: reminder.id,
-          status: ReminderStatus.delivered,
-        );
-        print('✅ Updated reminder ${reminder.id} to delivered');
-      } catch (e) {
-        print('❌ Error updating reminder ${reminder.id}: $e');
+      // Reload reminders to get updated statuses from database
+      if (_currentCompanyId != null) {
+        _reminders = await _repository.getByCompanyId(_currentCompanyId!);
+      } else if (_currentUserId != null) {
+        _reminders = await _repository.getAllReminders(_currentUserId!);
       }
-    }
 
-    // Reload reminders to get updated statuses
-    if (_currentCompanyId != null) {
-      _reminders = await _repository.getByCompanyId(_currentCompanyId!);
-    } else if (_currentUserId != null) {
-      _reminders = await _repository.getAllReminders(_currentUserId!);
+      print('✅ Reminders reloaded from database');
+    } catch (e) {
+      print('❌ Error updating expired reminders: $e');
+      // Don't rethrow - just log the error
     }
   }
 
@@ -276,5 +274,36 @@ class ReminderProvider extends ChangeNotifier {
   Future<void> _cancelNotification(String reminderId) async {
     final notificationId = reminderId.hashCode;
     await _notificationHelper.cancelNotification(notificationId);
+  }
+
+  /// Start periodic timer to check and update expired reminder statuses
+  void _startStatusUpdateTimer() {
+    // Cancel existing timer if any
+    _statusUpdateTimer?.cancel();
+
+    // Check every 30 seconds for expired reminders
+    _statusUpdateTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) async {
+        // Only update if we have loaded reminders and not currently loading
+        if (_reminders.isNotEmpty && !_isLoading) {
+          print('⏰ Timer: Checking for expired reminders...');
+          try {
+            await updateExpiredReminders();
+            notifyListeners();
+          } catch (e) {
+            print('❌ Timer: Error updating expired reminders: $e');
+          }
+        }
+      },
+    );
+    print('✅ Status update timer started (every 30 seconds)');
+  }
+
+  @override
+  void dispose() {
+    _statusUpdateTimer?.cancel();
+    print('🛑 Status update timer cancelled');
+    super.dispose();
   }
 }

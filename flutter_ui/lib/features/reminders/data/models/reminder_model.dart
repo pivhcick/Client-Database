@@ -38,12 +38,23 @@ class ReminderModel {
       companyName = company['name'] as String?;
     }
 
+    // Parse scheduled_for and convert UTC to local time
+    final scheduledForString = json['scheduled_for'] as String;
+    final scheduledForUtc = DateTime.parse(scheduledForString);
+    // Convert UTC time from database to local time for display
+    final scheduledForLocal = scheduledForUtc.toLocal();
+
+    print('🔍 ReminderModel.fromJson DEBUG:');
+    print('  Raw scheduled_for string from DB: "$scheduledForString"');
+    print('  Parsed as UTC: $scheduledForUtc (isUtc: ${scheduledForUtc.isUtc})');
+    print('  Converted to local: $scheduledForLocal (isUtc: ${scheduledForLocal.isUtc}, offset: ${scheduledForLocal.timeZoneOffset})');
+
     return ReminderModel(
       id: json['id'] as String,
       companyId: json['company_id'] as String,
       title: json['title'] as String,
       description: json['description'] as String?,
-      scheduledFor: DateTime.parse(json['scheduled_for'] as String),
+      scheduledFor: scheduledForLocal,
       status: ReminderStatus.fromString(json['status'] as String),
       createdByUserId: json['created_by_user_id'] as String,
       companyName: companyName,

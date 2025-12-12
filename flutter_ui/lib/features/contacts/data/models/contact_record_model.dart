@@ -41,11 +41,15 @@ class ContactRecordModel {
       }
     }
 
+    // Parse created_at and convert UTC to local time
+    final createdAtUtc = DateTime.parse(json['created_at'] as String);
+    final createdAtLocal = createdAtUtc.toLocal();
+
     return ContactRecordModel(
       id: json['id'] as String,
       companyId: json['company_id'] as String,
       content: json['content'] as String,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: createdAtLocal,
       createdByUserId: json['created_by_user_id'] as String,
       createdByUserName: userName,
     );
