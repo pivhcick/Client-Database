@@ -459,11 +459,12 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
             ),
           ),
           const SizedBox(height: 2),
-          Text(
-            contactPerson.phone,
+          PhoneNumberLink(
+            phoneNumber: contactPerson.phone,
             style: const TextStyle(
               fontSize: 12,
-              color: Color(0xFF8F9098),
+              color: Color(0xFF006FFD),
+              decoration: TextDecoration.underline,
               fontFamily: 'Inter',
             ),
           ),

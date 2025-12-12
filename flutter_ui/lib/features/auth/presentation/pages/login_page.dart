@@ -84,25 +84,13 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Logo or app name
-                  const Text(
-                    'Комплексное обеспечение',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2F3036),
-                      fontFamily: 'Sora',
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'CRM система для управления клиентами',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF8F9098),
-                      fontFamily: 'Inter',
+                  // Logo
+                  Center(
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      width: 120,
+                      height: 120,
+                      fit: BoxFit.contain,
                     ),
                   ),
                   const SizedBox(height: 48),
@@ -148,26 +136,6 @@ class _LoginPageState extends State<LoginPage> {
                       },
                     ),
                     onChanged: (_) => _clearErrorOnTyping(),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Forgot password link
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {
-                        // Navigate to password reset
-                        // TODO: Implement when GoRouter is set up
-                      },
-                      child: const Text(
-                        'Забыли пароль?',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF006FFD),
-                          fontFamily: 'Inter',
-                        ),
-                      ),
-                    ),
                   ),
                   const SizedBox(height: 24),
 
