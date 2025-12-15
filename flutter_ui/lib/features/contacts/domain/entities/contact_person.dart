@@ -32,6 +32,9 @@ class ContactPerson {
     return '$lastName $firstInitial.$middleInitial.';
   }
 
+  /// Get clean phone number without formatting (no spaces, dashes, parentheses)
+  String get cleanPhone => phone.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+
   /// Create a copy with updated fields
   ContactPerson copyWith({
     String? id,

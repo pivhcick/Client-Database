@@ -8,6 +8,7 @@ import '../features/users/presentation/pages/user_form_page.dart';
 import '../features/companies/presentation/pages/companies_list_page.dart';
 import '../features/companies/presentation/pages/company_form_page.dart';
 import '../features/companies/presentation/pages/company_detail_page.dart';
+import '../features/debug/notification_debug_page.dart';
 
 /// Application router configuration
 ///
@@ -91,6 +92,13 @@ class AppRouter {
           return CompanyFormPage(companyId: companyId);
         },
       ),
+
+      // DEBUG: Uncomment to enable notification diagnostics page
+      // GoRoute(
+      //   path: '/debug/notifications',
+      //   name: 'debug-notifications',
+      //   builder: (context, state) => const NotificationDebugPage(),
+      // ),
 
       // TODO: Add more routes in future phases:
       // - /notifications (NotificationsPage)

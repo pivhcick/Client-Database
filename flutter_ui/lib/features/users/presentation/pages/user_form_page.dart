@@ -324,32 +324,34 @@ class _UserFormPageState extends State<UserFormPage> {
                     ),
                     const SizedBox(height: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
                         border: Border.all(color: const Color(0xFFC5C6CC)),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<entities.UserRole>(
-                          value: _selectedRole,
-                          isExpanded: true,
-                          items: const [
-                            DropdownMenuItem(
-                              value: entities.UserRole.regular,
-                              child: Text('Пользователь'),
-                            ),
-                            DropdownMenuItem(
-                              value: entities.UserRole.admin,
-                              child: Text('Администратор'),
-                            ),
-                          ],
-                          onChanged: (value) {
-                            if (value != null) {
-                              setState(() {
-                                _selectedRole = value;
-                              });
-                            }
-                          },
+                      child: Center(
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<entities.UserRole>(
+                            value: _selectedRole,
+                            isExpanded: true,
+                            items: const [
+                              DropdownMenuItem(
+                                value: entities.UserRole.regular,
+                                child: Text('Пользователь'),
+                              ),
+                              DropdownMenuItem(
+                                value: entities.UserRole.admin,
+                                child: Text('Администратор'),
+                              ),
+                            ],
+                            onChanged: (value) {
+                              if (value != null) {
+                                setState(() {
+                                  _selectedRole = value;
+                                });
+                              }
+                            },
+                          ),
                         ),
                       ),
                     ),

@@ -308,36 +308,38 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
                     ),
                     const SizedBox(height: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
                         border: Border.all(color: const Color(0xFFC5C6CC)),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<CompanyStatus>(
-                          value: _selectedStatus,
-                          isExpanded: true,
-                          items: const [
-                            DropdownMenuItem(
-                              value: CompanyStatus.real,
-                              child: Text('Реальный'),
-                            ),
-                            DropdownMenuItem(
-                              value: CompanyStatus.potential,
-                              child: Text('Потенциальный'),
-                            ),
-                            DropdownMenuItem(
-                              value: CompanyStatus.lost,
-                              child: Text('Потерянный'),
-                            ),
-                          ],
-                          onChanged: (value) {
-                            if (value != null) {
-                              setState(() {
-                                _selectedStatus = value;
-                              });
-                            }
-                          },
+                      child: Center(
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<CompanyStatus>(
+                            value: _selectedStatus,
+                            isExpanded: true,
+                            items: const [
+                              DropdownMenuItem(
+                                value: CompanyStatus.real,
+                                child: Text('Реальный'),
+                              ),
+                              DropdownMenuItem(
+                                value: CompanyStatus.potential,
+                                child: Text('Потенциальный'),
+                              ),
+                              DropdownMenuItem(
+                                value: CompanyStatus.lost,
+                                child: Text('Потерянный'),
+                              ),
+                            ],
+                            onChanged: (value) {
+                              if (value != null) {
+                                setState(() {
+                                  _selectedStatus = value;
+                                });
+                              }
+                            },
+                          ),
                         ),
                       ),
                     ),

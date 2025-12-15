@@ -255,6 +255,7 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
                         child: Consumer<CompanyProvider>(
                           builder: (context, provider, _) {
                             return Container(
+                              height: 36,
                               padding: const EdgeInsets.symmetric(horizontal: 12),
                               decoration: BoxDecoration(
                                 border: Border.all(
@@ -263,24 +264,26 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
                                 ),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: DropdownButton<CompanyStatus?>(
-                                value: provider.statusFilter,
-                                isExpanded: true,
-                                underline: const SizedBox.shrink(),
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Inter',
-                                  color: Colors.black,
-                                ),
-                                hint: const Text(
-                                  'Все',
-                                  style: TextStyle(
+                              child: Center(
+                                child: DropdownButton<CompanyStatus?>(
+                                  value: provider.statusFilter,
+                                  isExpanded: true,
+                                  underline: const SizedBox.shrink(),
+                                  isDense: true,
+                                  style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
                                     fontFamily: 'Inter',
+                                    color: Colors.black,
                                   ),
-                                ),
+                                  hint: const Text(
+                                    'Все',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      fontFamily: 'Inter',
+                                    ),
+                                  ),
                                 items: [
                                   const DropdownMenuItem<CompanyStatus?>(
                                     value: null,
@@ -382,6 +385,7 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
                                     provider.setStatusFilter(newValue);
                                   }
                                 },
+                                ),
                               ),
                             );
                           },
@@ -407,6 +411,7 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
                             );
 
                             return Container(
+                              height: 36,
                               padding: const EdgeInsets.symmetric(horizontal: 12),
                               decoration: BoxDecoration(
                                 border: Border.all(
@@ -415,37 +420,40 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
                                 ),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: DropdownButton<SortOption>(
-                                value: currentOption,
-                                isExpanded: true,
-                                underline: const SizedBox.shrink(),
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: 'Inter',
-                                  color: Colors.black,
-                                ),
-                                items: SortOption.values.map((option) {
-                                  return DropdownMenuItem<SortOption>(
-                                    value: option,
-                                    child: Text(
-                                      option.label,
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        fontFamily: 'Inter',
+                              child: Center(
+                                child: DropdownButton<SortOption>(
+                                  value: currentOption,
+                                  isExpanded: true,
+                                  underline: const SizedBox.shrink(),
+                                  isDense: true,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Inter',
+                                    color: Colors.black,
+                                  ),
+                                  items: SortOption.values.map((option) {
+                                    return DropdownMenuItem<SortOption>(
+                                      value: option,
+                                      child: Text(
+                                        option.label,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          fontFamily: 'Inter',
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: (SortOption? newValue) {
-                                  if (newValue != null) {
-                                    provider.setSorting(
-                                      newValue.field,
-                                      newValue.direction,
                                     );
-                                  }
-                                },
+                                  }).toList(),
+                                  onChanged: (SortOption? newValue) {
+                                    if (newValue != null) {
+                                      provider.setSorting(
+                                        newValue.field,
+                                        newValue.direction,
+                                      );
+                                    }
+                                  },
+                                ),
                               ),
                             );
                           },
@@ -619,13 +627,13 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
                                       ),
                                       const SizedBox(height: 8),
                                       PhoneNumberLink(
-                                        phoneNumber: company.phone,
+                                        phoneNumber: company.cleanPhone,
                                         icon: Icons.phone,
                                         iconSize: 14,
                                         style: const TextStyle(
                                           fontSize: 12,
                                           color: Color(0xFF006FFD),
-                                          decoration: TextDecoration.underline,
+                                          decoration: TextDecoration.none,
                                           fontFamily: 'Inter',
                                         ),
                                       ),
@@ -756,6 +764,16 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
                         context.go('/users');
                       },
                     ),
+                  // DEBUG: Uncomment to enable notification diagnostics page
+                  // if (authProvider.isAdmin)
+                  //   ListTile(
+                  //     leading: const Icon(Icons.bug_report),
+                  //     title: const Text('🔧 Диагностика уведомлений'),
+                  //     onTap: () {
+                  //       Navigator.pop(context);
+                  //       context.go('/debug/notifications');
+                  //     },
+                  //   ),
                   const Divider(),
                   ListTile(
                     leading: const Icon(Icons.logout),

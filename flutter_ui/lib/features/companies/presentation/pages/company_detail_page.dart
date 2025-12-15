@@ -235,7 +235,7 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
               ],
             ),
             const Divider(height: 32),
-            _buildPhoneRow(Icons.phone, 'Телефон', _company!.phone),
+            _buildPhoneRow(Icons.phone, 'Телефон', _company!.cleanPhone),
             if (_company!.email != null) ...[
               const SizedBox(height: 12),
               _buildInfoRow(Icons.email, 'Email', _company!.email!),
@@ -341,7 +341,7 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
                 style: const TextStyle(
                   fontSize: 14,
                   color: Color(0xFF006FFD),
-                  decoration: TextDecoration.underline,
+                  decoration: TextDecoration.none,
                   fontFamily: 'Inter',
                 ),
               ),
@@ -460,11 +460,11 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
           ),
           const SizedBox(height: 2),
           PhoneNumberLink(
-            phoneNumber: contactPerson.phone,
+            phoneNumber: contactPerson.cleanPhone,
             style: const TextStyle(
               fontSize: 12,
               color: Color(0xFF006FFD),
-              decoration: TextDecoration.underline,
+              decoration: TextDecoration.none,
               fontFamily: 'Inter',
             ),
           ),
@@ -978,52 +978,75 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
           ),
         ],
       ),
-      trailing: reminder.status == ReminderStatus.pending
-          ? PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert, size: 20),
-              onSelected: (value) {
-                if (value == 'edit') {
-                  _showReminderDialog(reminder: reminder);
-                } else if (value == 'cancel') {
-                  _handleCancelReminder(reminder);
-                } else if (value == 'delete') {
-                  _handleDeleteReminder(reminder);
-                }
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'edit',
-                  child: Row(
-                    children: [
-                      Icon(Icons.edit, size: 18),
-                      SizedBox(width: 8),
-                      Text('Редактировать'),
-                    ],
-                  ),
+      trailing: PopupMenuButton<String>(
+        icon: const Icon(Icons.more_vert, size: 20),
+        onSelected: (value) {
+          if (value == 'edit') {
+            _showReminderDialog(reminder: reminder);
+          } else if (value == 'cancel') {
+            _handleCancelReminder(reminder);
+          } else if (value == 'delete') {
+            _handleDeleteReminder(reminder);
+          }
+        },
+        itemBuilder: (context) {
+          // For pending reminders - show all options
+          if (reminder.status == ReminderStatus.pending) {
+            return [
+              const PopupMenuItem(
+                value: 'edit',
+                child: Row(
+                  children: [
+                    Icon(Icons.edit, size: 18),
+                    SizedBox(width: 8),
+                    Text('Редактировать'),
+                  ],
                 ),
-                const PopupMenuItem(
-                  value: 'cancel',
-                  child: Row(
-                    children: [
-                      Icon(Icons.cancel, size: 18),
-                      SizedBox(width: 8),
-                      Text('Отменить'),
-                    ],
-                  ),
+              ),
+              const PopupMenuItem(
+                value: 'cancel',
+                child: Row(
+                  children: [
+                    Icon(Icons.cancel, size: 18),
+                    SizedBox(width: 8),
+                    Text('Отменить'),
+                  ],
                 ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete, size: 18),
-                      SizedBox(width: 8),
-                      Text('Удалить'),
-                    ],
-                  ),
+              ),
+              const PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete, size: 18, color: Color(0xFFF53178)),
+                    SizedBox(width: 8),
+                    Text(
+                      'Удалить',
+                      style: TextStyle(color: Color(0xFFF53178)),
+                    ),
+                  ],
                 ),
-              ],
-            )
-          : null,
+              ),
+            ];
+          } else {
+            // For delivered/cancelled reminders - only show delete
+            return [
+              const PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete, size: 18, color: Color(0xFFF53178)),
+                    SizedBox(width: 8),
+                    Text(
+                      'Удалить',
+                      style: TextStyle(color: Color(0xFFF53178)),
+                    ),
+                  ],
+                ),
+              ),
+            ];
+          }
+        },
+      ),
     );
   }
 

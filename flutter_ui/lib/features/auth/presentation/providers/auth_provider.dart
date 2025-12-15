@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/entities/organization.dart';
@@ -92,6 +93,13 @@ class AuthProvider extends ChangeNotifier {
 
       _state = AuthState.authenticated;
       notifyListeners();
+    } on SocketException {
+      _state = AuthState.error;
+      _errorMessage = 'Нет подключения к интернету. Проверьте сетевое соединение и попробуйте снова.';
+      _currentUser = null;
+      _currentOrganization = null;
+      notifyListeners();
+      rethrow;
     } catch (e) {
       _state = AuthState.error;
       _errorMessage = e.toString().replaceAll('Exception: ', '');

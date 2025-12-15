@@ -26,24 +26,13 @@ class PhoneNumberLink extends StatelessWidget {
     final uri = Uri(scheme: 'tel', path: cleanNumber);
 
     try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri);
-      } else {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Не удалось открыть приложение для звонков'),
-              backgroundColor: Color(0xFFF53178),
-            ),
-          );
-        }
-      }
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Ошибка: ${e.toString()}'),
-            backgroundColor: const Color(0xFFF53178),
+          const SnackBar(
+            content: Text('Не удалось открыть приложение для звонков'),
+            backgroundColor: Color(0xFFF53178),
           ),
         );
       }
@@ -70,7 +59,7 @@ class PhoneNumberLink extends StatelessWidget {
             style: style ??
                 const TextStyle(
                   color: Color(0xFF006FFD),
-                  decoration: TextDecoration.underline,
+                  decoration: TextDecoration.none,
                   fontSize: 14,
                   fontFamily: 'Inter',
                 ),
