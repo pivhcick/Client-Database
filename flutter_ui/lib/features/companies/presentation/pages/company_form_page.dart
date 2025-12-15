@@ -308,7 +308,7 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
                     ),
                     const SizedBox(height: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       decoration: BoxDecoration(
                         border: Border.all(color: const Color(0xFFC5C6CC)),
                         borderRadius: BorderRadius.circular(12),
@@ -318,6 +318,11 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
                           child: DropdownButton<CompanyStatus>(
                             value: _selectedStatus,
                             isExpanded: true,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF2F3036),
+                              fontFamily: 'Inter',
+                            ),
                             items: const [
                               DropdownMenuItem(
                                 value: CompanyStatus.real,

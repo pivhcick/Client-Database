@@ -142,14 +142,7 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Компании'),
-        leading: authProvider.isAdmin
-            ? Builder(
-                builder: (context) => IconButton(
-                  icon: const Icon(Icons.menu),
-                  onPressed: () => Scaffold.of(context).openDrawer(),
-                ),
-              )
-            : null,
+        automaticallyImplyLeading: false,
         actions: [
           // Stats badge
           if (companyProvider != null)
@@ -182,16 +175,6 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
                 );
               },
             ),
-          // Logout button
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await authProvider.logout();
-              if (context.mounted) {
-                context.go('/login');
-              }
-            },
-          ),
         ],
       ),
       body: companyProvider == null
@@ -625,7 +608,7 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 8),
+                                      const SizedBox(height: 4),
                                       PhoneNumberLink(
                                         phoneNumber: company.cleanPhone,
                                         icon: Icons.phone,
@@ -699,96 +682,6 @@ class _CompaniesListPageState extends State<CompaniesListPage> {
         backgroundColor: const Color(0xFF006FFD),
         child: const Icon(Icons.add),
       ),
-      drawer: authProvider.isAdmin
-          ? Drawer(
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: [
-                  DrawerHeader(
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF006FFD),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const CircleAvatar(
-                          radius: 28,
-                          backgroundColor: Colors.white,
-                          child: Icon(
-                            Icons.person,
-                            size: 28,
-                            color: Color(0xFF006FFD),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          authProvider.currentUser?.fullName ?? '',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: 'Inter',
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          authProvider.currentUser?.email ?? '',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                            fontFamily: 'Inter',
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.business),
-                    title: const Text('Компании'),
-                    selected: true,
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                  if (authProvider.isAdmin)
-                    ListTile(
-                      leading: const Icon(Icons.people),
-                      title: const Text('Управление пользователями'),
-                      onTap: () {
-                        Navigator.pop(context);
-                        context.go('/users');
-                      },
-                    ),
-                  // DEBUG: Uncomment to enable notification diagnostics page
-                  // if (authProvider.isAdmin)
-                  //   ListTile(
-                  //     leading: const Icon(Icons.bug_report),
-                  //     title: const Text('🔧 Диагностика уведомлений'),
-                  //     onTap: () {
-                  //       Navigator.pop(context);
-                  //       context.go('/debug/notifications');
-                  //     },
-                  //   ),
-                  const Divider(),
-                  ListTile(
-                    leading: const Icon(Icons.logout),
-                    title: const Text('Выйти'),
-                    onTap: () async {
-                      await authProvider.logout();
-                      if (context.mounted) {
-                        context.go('/login');
-                      }
-                    },
-                  ),
-                ],
-              ),
-            )
-          : null,
     );
   }
 

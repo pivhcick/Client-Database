@@ -6,6 +6,16 @@ enum UserRole {
   final String value;
   const UserRole(this.value);
 
+  /// Get display name in Russian
+  String get displayName {
+    switch (this) {
+      case UserRole.admin:
+        return 'Администратор';
+      case UserRole.regular:
+        return 'Пользователь';
+    }
+  }
+
   static UserRole fromString(String value) {
     return UserRole.values.firstWhere(
       (role) => role.value == value,

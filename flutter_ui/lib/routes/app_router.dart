@@ -8,7 +8,9 @@ import '../features/users/presentation/pages/user_form_page.dart';
 import '../features/companies/presentation/pages/companies_list_page.dart';
 import '../features/companies/presentation/pages/company_form_page.dart';
 import '../features/companies/presentation/pages/company_detail_page.dart';
+import '../features/settings/presentation/pages/settings_page.dart';
 import '../features/debug/notification_debug_page.dart';
+import '../core/widgets/main_scaffold.dart';
 
 /// Application router configuration
 ///
@@ -40,14 +42,30 @@ class AppRouter {
       GoRoute(
         path: '/',
         name: 'home',
-        builder: (context, state) => const CompaniesListPage(),
+        builder: (context, state) => const MainScaffold(
+          currentIndex: 0,
+          child: CompaniesListPage(),
+        ),
       ),
 
       // Companies list (same as home, but accessible via /companies)
       GoRoute(
         path: '/companies',
         name: 'companies',
-        builder: (context, state) => const CompaniesListPage(),
+        builder: (context, state) => const MainScaffold(
+          currentIndex: 0,
+          child: CompaniesListPage(),
+        ),
+      ),
+
+      // Settings page
+      GoRoute(
+        path: '/settings',
+        name: 'settings',
+        builder: (context, state) => const MainScaffold(
+          currentIndex: 1,
+          child: SettingsPage(),
+        ),
       ),
 
       // User management routes (admin only)

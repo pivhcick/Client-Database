@@ -218,9 +218,23 @@ class _UserFormPageState extends State<UserFormPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isEditMode
-            ? 'Редактировать пользователя'
-            : 'Новый пользователь'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/users'),
+        ),
+        title: Text(
+          widget.isEditMode
+              ? 'Редактировать пользователя'
+              : 'Новый пользователь',
+          style: const TextStyle(
+            fontFamily: 'Inter',
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: const Color(0xFF006FFD),
+        foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -324,7 +338,7 @@ class _UserFormPageState extends State<UserFormPage> {
                     ),
                     const SizedBox(height: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       decoration: BoxDecoration(
                         border: Border.all(color: const Color(0xFFC5C6CC)),
                         borderRadius: BorderRadius.circular(12),
@@ -334,6 +348,11 @@ class _UserFormPageState extends State<UserFormPage> {
                           child: DropdownButton<entities.UserRole>(
                             value: _selectedRole,
                             isExpanded: true,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF2F3036),
+                              fontFamily: 'Inter',
+                            ),
                             items: const [
                               DropdownMenuItem(
                                 value: entities.UserRole.regular,
