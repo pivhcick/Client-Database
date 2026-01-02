@@ -45,24 +45,37 @@ class CompanyProvider extends ChangeNotifier {
 
   /// Load all companies
   Future<void> loadCompanies() async {
+    print('🏢 loadCompanies called');
     _isLoading = true;
     _hasError = false;
     _errorMessage = null;
     notifyListeners();
 
     try {
+      print('🏢 Fetching companies from repository...');
       _companies = await _companyRepository.getCompaniesFiltered(
         statusFilter: _statusFilter,
         sortField: _sortField,
         sortDirection: _sortDirection,
       );
+      print('✅ Loaded ${_companies.length} companies');
       _hasError = false;
     } catch (e) {
+      print('❌ Error loading companies: $e');
       _hasError = true;
-      _errorMessage = e.toString().replaceAll('Exception: ', '');
+
+      // Check if it's a network error
+      if (e.toString().contains('SocketException') ||
+          e.toString().contains('Failed host lookup')) {
+        _errorMessage = 'Нет подключения к интернету';
+      } else {
+        _errorMessage = e.toString().replaceAll('Exception: ', '');
+      }
+
       _companies = [];
     } finally {
       _isLoading = false;
+      print('🏢 loadCompanies complete. Companies: ${_companies.length}, hasError: $_hasError');
       notifyListeners();
     }
   }

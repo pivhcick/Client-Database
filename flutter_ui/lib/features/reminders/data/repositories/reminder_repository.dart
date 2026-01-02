@@ -66,14 +66,14 @@ class ReminderRepository {
 
   /// Get reminders for a company
   ///
-  /// Returns reminders for a specific company ordered by scheduled_for ascending.
+  /// Returns reminders for a specific company ordered by scheduled_for descending (newest first).
   Future<List<Reminder>> getByCompanyId(String companyId) async {
     try {
       final response = await _supabase
           .from('reminders')
           .select('*, companies(name)')
           .eq('company_id', companyId)
-          .order('scheduled_for', ascending: true);
+          .order('scheduled_for', ascending: false);
 
       final reminders = (response as List)
           .map((json) => ReminderModel.fromJson(json).toEntity())

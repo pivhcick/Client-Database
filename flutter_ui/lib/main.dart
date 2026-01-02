@@ -18,6 +18,8 @@ import 'features/contacts/data/repositories/contact_record_repository.dart';
 import 'features/contacts/presentation/providers/contact_record_provider.dart';
 import 'features/reminders/data/repositories/reminder_repository.dart';
 import 'features/reminders/presentation/providers/reminder_provider.dart';
+import 'features/notifications/data/repositories/notification_record_repository.dart';
+import 'features/notifications/presentation/providers/notification_provider.dart';
 import 'core/utils/notification_helper.dart';
 import 'app.dart';
 
@@ -135,15 +137,54 @@ void main() async {
           },
         ),
 
-        // ReminderProvider (does not depend on organization_id)
+        // NotificationProvider (does not depend on organization_id - RLS handles filtering)
         ChangeNotifierProvider(
           create: (_) {
+            final notificationRecordRepository = NotificationRecordRepository(
+              supabase: Supabase.instance.client,
+            );
+            return NotificationProvider(repository: notificationRecordRepository);
+          },
+        ),
+
+        // ReminderProvider (depends on AuthProvider and NotificationProvider)
+        ChangeNotifierProxyProvider2<AuthProvider, NotificationProvider,
+            ReminderProvider>(
+          create: (context) {
+            final reminderRepository = ReminderRepository(
+              supabase: Supabase.instance.client,
+            );
+            // Get providers from context for initial creation
+            final authProvider = Provider.of<AuthProvider>(context, listen: false);
+            final notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
+
+            return ReminderProvider(
+              repository: reminderRepository,
+              notificationHelper: notificationHelper,
+              notificationProvider: notificationProvider,
+              authProvider: authProvider,
+            );
+          },
+          update: (context, authProvider, notificationProvider, previous) {
+            // Reuse previous instance and just update dependencies
+            // This prevents recreating the provider and losing state
+            if (previous != null) {
+              previous.updateDependencies(
+                notificationProvider: notificationProvider,
+                authProvider: authProvider,
+              );
+              return previous;
+            }
+
+            // Fallback: create new instance if previous is null
             final reminderRepository = ReminderRepository(
               supabase: Supabase.instance.client,
             );
             return ReminderProvider(
               repository: reminderRepository,
               notificationHelper: notificationHelper,
+              notificationProvider: notificationProvider,
+              authProvider: authProvider,
             );
           },
         ),

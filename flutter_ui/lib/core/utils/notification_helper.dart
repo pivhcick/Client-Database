@@ -16,6 +16,9 @@ class NotificationHelper {
 
   bool _initialized = false;
 
+  // Callback for handling notification tap
+  void Function(String? payload)? onNotificationTapped;
+
   /// Initialize notifications
   Future<void> init() async {
     if (_initialized) {
@@ -327,9 +330,13 @@ class NotificationHelper {
 
   /// Notification tapped callback
   void _onNotificationTapped(NotificationResponse response) {
-    // TODO: Handle notification tap
-    // Navigate to reminder details or company details
-    // based on payload
-    print('Notification tapped: ${response.payload}');
+    print('🔔 Notification tapped: ${response.payload}');
+
+    // Call the registered callback if available
+    if (onNotificationTapped != null) {
+      onNotificationTapped!(response.payload);
+    } else {
+      print('⚠️ No onNotificationTapped callback registered');
+    }
   }
 }

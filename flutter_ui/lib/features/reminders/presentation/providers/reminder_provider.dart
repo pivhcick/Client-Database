@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import '../../domain/entities/reminder.dart';
 import '../../domain/entities/reminder_status.dart';
 import '../../data/repositories/reminder_repository.dart';
 import '../../../../core/utils/notification_helper.dart';
+import '../../../notifications/presentation/providers/notification_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 /// Reminder provider
 ///
@@ -11,15 +14,30 @@ import '../../../../core/utils/notification_helper.dart';
 class ReminderProvider extends ChangeNotifier {
   final ReminderRepository _repository;
   final NotificationHelper _notificationHelper;
+  NotificationProvider? _notificationProvider;
+  AuthProvider? _authProvider;
   Timer? _statusUpdateTimer;
 
   ReminderProvider({
     required ReminderRepository repository,
     required NotificationHelper notificationHelper,
+    NotificationProvider? notificationProvider,
+    AuthProvider? authProvider,
   })  : _repository = repository,
-        _notificationHelper = notificationHelper {
+        _notificationHelper = notificationHelper,
+        _notificationProvider = notificationProvider,
+        _authProvider = authProvider {
     // Start periodic status check every 30 seconds
     _startStatusUpdateTimer();
+  }
+
+  /// Update dependencies without recreating the provider
+  void updateDependencies({
+    NotificationProvider? notificationProvider,
+    AuthProvider? authProvider,
+  }) {
+    _notificationProvider = notificationProvider;
+    _authProvider = authProvider;
   }
 
   List<Reminder> _reminders = [];
@@ -28,6 +46,7 @@ class ReminderProvider extends ChangeNotifier {
   String? _errorMessage;
   String? _currentCompanyId;
   String? _currentUserId;
+  bool _disposed = false;
 
   // Getters
   List<Reminder> get reminders => _reminders;
@@ -49,7 +68,7 @@ class ReminderProvider extends ChangeNotifier {
     _isLoading = true;
     _hasError = false;
     _errorMessage = null;
-    notifyListeners();
+    _safeNotifyListeners();
 
     try {
       _reminders = await _repository.getAllReminders(userId);
@@ -63,31 +82,36 @@ class ReminderProvider extends ChangeNotifier {
       _reminders = [];
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _safeNotifyListeners();
     }
   }
 
   /// Load reminders for a company
   Future<void> loadRemindersByCompany(String companyId) async {
+    print('🔄 loadRemindersByCompany called for companyId: $companyId');
     _currentCompanyId = companyId;
     _isLoading = true;
     _hasError = false;
     _errorMessage = null;
-    notifyListeners();
+    _safeNotifyListeners();
 
     try {
       _reminders = await _repository.getByCompanyId(companyId);
+      print('✅ Loaded ${_reminders.length} reminders from database');
       _hasError = false;
 
       // Update expired reminders to delivered status
       await updateExpiredReminders();
+      print('✅ After updateExpiredReminders: ${_reminders.length} reminders');
     } catch (e) {
+      print('❌ Error loading reminders: $e');
       _hasError = true;
       _errorMessage = e.toString().replaceAll('Exception: ', '');
       _reminders = [];
     } finally {
       _isLoading = false;
-      notifyListeners();
+      print('✅ loadRemindersByCompany complete. Final count: ${_reminders.length}');
+      _safeNotifyListeners();
     }
   }
 
@@ -119,12 +143,16 @@ class ReminderProvider extends ChangeNotifier {
     // Schedule notification
     await _scheduleNotification(reminder);
 
-    // Reload reminders after creation
-    if (_currentCompanyId != null) {
-      await loadRemindersByCompany(_currentCompanyId!);
-    } else if (_currentUserId != null) {
-      await loadReminders(_currentUserId!);
+    // Create notification record immediately (will be shown when scheduled time comes)
+    // Don't let this block the reminder creation flow
+    try {
+      await _createNotificationRecord(reminder);
+    } catch (e) {
+      print('⚠️ Failed to create notification record, but reminder was created: $e');
     }
+
+    // Note: List reloading is handled by the UI after dialog closes
+    // to avoid race conditions and empty list issues
   }
 
   /// Update reminder and reschedule notification
@@ -205,6 +233,13 @@ class ReminderProvider extends ChangeNotifier {
     try {
       print('🔄 Updating expired reminders via database RPC...');
 
+      // Get currently expired reminders before updating
+      final expiredReminders = _reminders
+          .where((r) =>
+              r.status == ReminderStatus.pending &&
+              r.scheduledFor.isBefore(DateTime.now()))
+          .toList();
+
       // Call database RPC function to update all expired reminders atomically
       final updatedCount = await _repository.updateExpiredRemindersInDatabase();
 
@@ -218,9 +253,58 @@ class ReminderProvider extends ChangeNotifier {
       }
 
       print('✅ Reminders reloaded from database');
+
+      // Note: Notification records are created when reminder is first scheduled
+      // No need to create them again when status changes to delivered
+      print('📝 ${expiredReminders.length} reminders were marked as delivered');
+      print('   Notification records should have been created during reminder creation');
     } catch (e) {
       print('❌ Error updating expired reminders: $e');
       // Don't rethrow - just log the error
+    }
+  }
+
+  /// Create notification record for a delivered reminder
+  Future<void> _createNotificationRecord(Reminder reminder) async {
+    print('📝 _createNotificationRecord called for reminder ${reminder.id}');
+    print('   _notificationProvider: ${_notificationProvider != null ? "available" : "NULL"}');
+    print('   _authProvider: ${_authProvider != null ? "available" : "NULL"}');
+    print('   _authProvider.currentUser: ${_authProvider?.currentUser != null ? "available" : "NULL"}');
+
+    if (_notificationProvider == null ||
+        _authProvider == null ||
+        _authProvider!.currentUser == null) {
+      print('⚠️ Cannot create notification record: missing dependencies');
+      print('   Skipping notification record creation');
+      return;
+    }
+
+    try {
+      final currentUser = _authProvider!.currentUser!;
+      final companyName = reminder.companyName ?? 'Компания';
+
+      print('📝 Creating notification record:');
+      print('   reminderId: ${reminder.id}');
+      print('   companyId: ${reminder.companyId}');
+      print('   userId: ${currentUser.id}');
+      print('   organizationId: ${currentUser.organizationId}');
+      print('   title: ${reminder.title}');
+
+      await _notificationProvider!.createNotificationRecord(
+        reminderId: reminder.id,
+        companyId: reminder.companyId,
+        userId: currentUser.id,
+        organizationId: currentUser.organizationId,
+        title: reminder.title,
+        body: companyName +
+            (reminder.description != null ? '\n${reminder.description}' : ''),
+      );
+
+      print('✅ Notification record created for reminder ${reminder.id}');
+    } catch (e) {
+      print('❌ Error creating notification record: $e');
+      print('   Stack trace: ${StackTrace.current}');
+      // Don't rethrow - notification record creation shouldn't block the update
     }
   }
 
@@ -241,14 +325,21 @@ class ReminderProvider extends ChangeNotifier {
       final notificationId = reminder.id.hashCode;
       final companyName = reminder.companyName ?? 'Компания';
 
+      // Create payload with companyId and reminderId as JSON
+      final payload = jsonEncode({
+        'reminderId': reminder.id,
+        'companyId': reminder.companyId,
+      });
+
       print('✅ Calling notificationHelper.scheduleNotification...');
+      print('  Payload: $payload');
 
       await _notificationHelper.scheduleNotification(
         id: notificationId,
         title: reminder.title,
         body: '$companyName${reminder.description != null ? '\n${reminder.description}' : ''}',
         scheduledDate: reminder.scheduledFor,
-        payload: reminder.id,
+        payload: payload,
       );
 
       print('✅ Notification scheduled successfully');
@@ -286,11 +377,11 @@ class ReminderProvider extends ChangeNotifier {
       const Duration(seconds: 30),
       (_) async {
         // Only update if we have loaded reminders and not currently loading
-        if (_reminders.isNotEmpty && !_isLoading) {
+        if (_reminders.isNotEmpty && !_isLoading && !_disposed) {
           print('⏰ Timer: Checking for expired reminders...');
           try {
             await updateExpiredReminders();
-            notifyListeners();
+            _safeNotifyListeners();
           } catch (e) {
             print('❌ Timer: Error updating expired reminders: $e');
           }
@@ -300,8 +391,16 @@ class ReminderProvider extends ChangeNotifier {
     print('✅ Status update timer started (every 30 seconds)');
   }
 
+  /// Safe notifyListeners that checks if disposed
+  void _safeNotifyListeners() {
+    if (!_disposed) {
+      notifyListeners();
+    }
+  }
+
   @override
   void dispose() {
+    _disposed = true;
     _statusUpdateTimer?.cancel();
     print('🛑 Status update timer cancelled');
     super.dispose();

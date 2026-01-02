@@ -850,7 +850,10 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
             const SizedBox(height: 8),
             Consumer<ReminderProvider>(
               builder: (context, provider, _) {
+                print('🎨 Consumer rebuilding. isLoading: ${provider.isLoading}, reminders: ${provider.reminders.length}');
+
                 if (provider.isLoading) {
+                  print('🎨 Showing loading indicator');
                   return const Center(
                     child: Padding(
                       padding: EdgeInsets.all(16),
@@ -860,6 +863,7 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
                 }
 
                 if (provider.reminders.isEmpty) {
+                  print('🎨 Showing empty state');
                   return const Center(
                     child: Padding(
                       padding: EdgeInsets.all(16),
@@ -875,6 +879,7 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
                   );
                 }
 
+                print('🎨 Showing ${provider.reminders.length} reminders');
                 return ListView.separated(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -1071,15 +1076,30 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
     );
 
     if (result == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            reminder == null
-                ? 'Напоминание добавлено'
-                : 'Напоминание обновлено',
+      print('🔄 Dialog returned true, reloading reminders for company ${widget.companyId}');
+
+      // Show snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              reminder == null
+                  ? 'Напоминание добавлено'
+                  : 'Напоминание обновлено',
+            ),
           ),
-        ),
-      );
+        );
+      }
+
+      // Use Future.microtask to ensure reload happens after current frame
+      Future.microtask(() async {
+        if (mounted) {
+          final reminderProvider = Provider.of<ReminderProvider>(context, listen: false);
+          print('📋 Provider reminders BEFORE reload: ${reminderProvider.reminders.length}');
+          await reminderProvider.loadRemindersByCompany(widget.companyId);
+          print('📋 Provider reminders AFTER reload: ${reminderProvider.reminders.length}');
+        }
+      });
     }
   }
 

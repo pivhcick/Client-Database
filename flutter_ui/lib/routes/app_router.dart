@@ -9,6 +9,7 @@ import '../features/companies/presentation/pages/companies_list_page.dart';
 import '../features/companies/presentation/pages/company_form_page.dart';
 import '../features/companies/presentation/pages/company_detail_page.dart';
 import '../features/settings/presentation/pages/settings_page.dart';
+import '../features/notifications/presentation/pages/notifications_page.dart';
 import '../features/debug/notification_debug_page.dart';
 import '../core/widgets/main_scaffold.dart';
 
@@ -38,22 +39,32 @@ class AppRouter {
         builder: (context, state) => const PasswordResetPage(),
       ),
 
-      // Home route - Companies list
+      // Home route - Companies (default page)
       GoRoute(
         path: '/',
         name: 'home',
         builder: (context, state) => const MainScaffold(
-          currentIndex: 0,
+          currentIndex: 1,
           child: CompaniesListPage(),
         ),
       ),
 
-      // Companies list (same as home, but accessible via /companies)
+      // Notifications page (same as home, but accessible via /notifications)
+      GoRoute(
+        path: '/notifications',
+        name: 'notifications',
+        builder: (context, state) => const MainScaffold(
+          currentIndex: 0,
+          child: NotificationsPage(),
+        ),
+      ),
+
+      // Companies list
       GoRoute(
         path: '/companies',
         name: 'companies',
         builder: (context, state) => const MainScaffold(
-          currentIndex: 0,
+          currentIndex: 1,
           child: CompaniesListPage(),
         ),
       ),
@@ -63,7 +74,7 @@ class AppRouter {
         path: '/settings',
         name: 'settings',
         builder: (context, state) => const MainScaffold(
-          currentIndex: 1,
+          currentIndex: 2,
           child: SettingsPage(),
         ),
       ),
