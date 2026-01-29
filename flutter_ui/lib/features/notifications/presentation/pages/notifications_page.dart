@@ -428,10 +428,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       ),
                     ],
 
-                    // 4. Time (время с учетом часового пояса)
+                    // 4. Time (дата и время напоминания)
                     const SizedBox(height: 8),
                     Text(
-                      dateFormatter.format(notification.deliveredAt),
+                      dateFormatter.format(notification.scheduledFor ?? notification.deliveredAt),
                       style: const TextStyle(
                         fontSize: 12,
                         color: Color(0xFF8F9098),

@@ -15,6 +15,7 @@ class NotificationRecord {
   final DateTime deliveredAt;
   final bool isRead;
   final DateTime? readAt;
+  final DateTime? scheduledFor; // From reminders table
 
   final DateTime createdAt;
 
@@ -30,6 +31,7 @@ class NotificationRecord {
     required this.deliveredAt,
     required this.isRead,
     this.readAt,
+    this.scheduledFor,
     required this.createdAt,
   });
 
@@ -46,6 +48,7 @@ class NotificationRecord {
     DateTime? deliveredAt,
     bool? isRead,
     DateTime? readAt,
+    DateTime? scheduledFor,
     DateTime? createdAt,
   }) {
     return NotificationRecord(
@@ -60,6 +63,7 @@ class NotificationRecord {
       deliveredAt: deliveredAt ?? this.deliveredAt,
       isRead: isRead ?? this.isRead,
       readAt: readAt ?? this.readAt,
+      scheduledFor: scheduledFor ?? this.scheduledFor,
       createdAt: createdAt ?? this.createdAt,
     );
   }

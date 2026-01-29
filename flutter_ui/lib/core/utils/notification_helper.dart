@@ -23,17 +23,17 @@ class NotificationHelper {
   /// Initialize notifications
   Future<void> init() async {
     if (_initialized) {
-      AppLogger.warning('NotificationHelper already initialized', 'NotificationHelper', 'NotificationHelper');
+      AppLogger.warning('NotificationHelper already initialized', 'NotificationHelper');
       return;
     }
 
-    AppLogger.notification('Initializing timezone data...', 'NotificationHelper', 'NotificationHelper');
+    AppLogger.notification('Initializing timezone data...', 'NotificationHelper');
     // Initialize timezone
     tz.initializeTimeZones();
 
     // ✅ Установить локальную временную зону устройства
     final String timeZoneName = DateTime.now().timeZoneName;
-    AppLogger.debug('Device timezone name: $timeZoneName', 'NotificationHelper', 'NotificationHelper');
+    AppLogger.debug('Device timezone name: $timeZoneName', 'NotificationHelper');
 
     // iOS и некоторые платформы возвращают аббревиатуры (MSK, GMT+3),
     // которые не работают с timezone package.
@@ -118,7 +118,7 @@ class NotificationHelper {
     }
 
     // Android initialization settings
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher', 'NotificationHelper');
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
 
     // iOS initialization settings
     const iosSettings = DarwinInitializationSettings(
@@ -158,13 +158,13 @@ class NotificationHelper {
             IOSFlutterLocalNotificationsPlugin>();
 
     if (iosPlugin != null) {
-      AppLogger.info('iOS detected, requesting iOS permissions...', 'NotificationHelper', 'NotificationHelper');
+      AppLogger.info('iOS detected, requesting iOS permissions...', 'NotificationHelper');
       final result = await iosPlugin.requestPermissions(
         alert: true,
         badge: true,
         sound: true,
       );
-      AppLogger.success('iOS permissions result: $result', 'NotificationHelper', 'NotificationHelper');
+      AppLogger.success('iOS permissions result: $result', 'NotificationHelper');
       return result ?? true;
     }
 
@@ -174,9 +174,9 @@ class NotificationHelper {
             AndroidFlutterLocalNotificationsPlugin>();
 
     if (androidPlugin != null) {
-      AppLogger.info('Android detected, requesting Android 13+ permissions...', 'NotificationHelper', 'NotificationHelper');
+      AppLogger.info('Android detected, requesting Android 13+ permissions...', 'NotificationHelper');
       final result = await androidPlugin.requestNotificationsPermission();
-      AppLogger.success('Android permissions result: $result', 'NotificationHelper', 'NotificationHelper');
+      AppLogger.success('Android permissions result: $result', 'NotificationHelper');
       return result ?? true;
     }
 
@@ -192,13 +192,13 @@ class NotificationHelper {
     required DateTime scheduledDate,
     String? payload,
   }) async {
-    AppLogger.notification('NotificationHelper.scheduleNotification called:', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('Notification ID: $id', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('Title: $title', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('Body: $body', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('Scheduled date (input): $scheduledDate', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('Current timezone: ${tz.local.name}', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('Current time: ${DateTime.now()}', 'NotificationHelper', 'NotificationHelper');
+    AppLogger.notification('NotificationHelper.scheduleNotification called:', 'NotificationHelper');
+    AppLogger.debug('Notification ID: $id', 'NotificationHelper');
+    AppLogger.debug('Title: $title', 'NotificationHelper');
+    AppLogger.debug('Body: $body', 'NotificationHelper');
+    AppLogger.debug('Scheduled date (input): $scheduledDate', 'NotificationHelper');
+    AppLogger.debug('Current timezone: ${tz.local.name}', 'NotificationHelper');
+    AppLogger.debug('Current time: ${DateTime.now()}', 'NotificationHelper');
 
     // ✅ Правильная конвертация локального времени в TZDateTime
     // scheduledDate - это локальное время устройства без timezone info
@@ -214,10 +214,10 @@ class NotificationHelper {
       scheduledDate.second,
     );
 
-    AppLogger.debug('TZ scheduled date: $tzScheduledDate', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('TZ current time: ${tz.TZDateTime.now(tz.local)}', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('Time difference: ${tzScheduledDate.difference(tz.TZDateTime.now(tz.local)).inMinutes} minutes', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('Payload: $payload', 'NotificationHelper', 'NotificationHelper');
+    AppLogger.debug('TZ scheduled date: $tzScheduledDate', 'NotificationHelper');
+    AppLogger.debug('TZ current time: ${tz.TZDateTime.now(tz.local)}', 'NotificationHelper');
+    AppLogger.debug('Time difference: ${tzScheduledDate.difference(tz.TZDateTime.now(tz.local)).inMinutes} minutes', 'NotificationHelper');
+    AppLogger.debug('Payload: $payload', 'NotificationHelper');
 
     // Notification details
     const androidDetails = AndroidNotificationDetails(
@@ -267,12 +267,12 @@ class NotificationHelper {
     required String body,
     String? payload,
   }) async {
-    AppLogger.notification('NotificationHelper.showNotification called:', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('Notification ID: $id', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('Title: $title', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('Body: $body', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('Payload: $payload', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('Initialized: $_initialized', 'NotificationHelper', 'NotificationHelper');
+    AppLogger.notification('NotificationHelper.showNotification called:', 'NotificationHelper');
+    AppLogger.debug('Notification ID: $id', 'NotificationHelper');
+    AppLogger.debug('Title: $title', 'NotificationHelper');
+    AppLogger.debug('Body: $body', 'NotificationHelper');
+    AppLogger.debug('Payload: $payload', 'NotificationHelper');
+    AppLogger.debug('Initialized: $_initialized', 'NotificationHelper');
 
     if (!_initialized) {
       AppLogger.error('ERROR: NotificationHelper not initialized!', 'NotificationHelper');

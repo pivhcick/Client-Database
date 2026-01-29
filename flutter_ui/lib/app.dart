@@ -31,7 +31,7 @@ class _AppState extends State<App> {
     notificationHelper.onNotificationTapped = _handleNotificationTap;
   }
 
-  void _handleNotificationTap(String? payload) {
+  Future<void> _handleNotificationTap(String? payload) async {
     if (payload == null) return;
 
     try {
@@ -76,7 +76,7 @@ class _AppState extends State<App> {
         final router = AppRouter(authProvider: authProvider).router;
 
         return MaterialApp.router(
-          title: 'Комплексное обеспечение',
+          title: 'Just CRM',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
           routerConfig: router,

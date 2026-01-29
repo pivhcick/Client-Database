@@ -14,6 +14,7 @@ class NotificationRecordModel extends NotificationRecord {
     required super.deliveredAt,
     required super.isRead,
     super.readAt,
+    super.scheduledFor,
     required super.createdAt,
   });
 
@@ -23,6 +24,15 @@ class NotificationRecordModel extends NotificationRecord {
     String? companyName;
     if (json['companies'] != null && json['companies'] is Map) {
       companyName = json['companies']['name'] as String?;
+    }
+
+    // Extract scheduled_for from joined reminders table if available
+    DateTime? scheduledFor;
+    if (json['reminders'] != null && json['reminders'] is Map) {
+      final sf = json['reminders']['scheduled_for'];
+      if (sf != null) {
+        scheduledFor = DateTime.parse(sf as String).toLocal();
+      }
     }
 
     return NotificationRecordModel(
@@ -39,6 +49,7 @@ class NotificationRecordModel extends NotificationRecord {
       readAt: json['read_at'] != null
           ? DateTime.parse(json['read_at'] as String).toLocal()
           : null,
+      scheduledFor: scheduledFor,
       createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
     );
   }

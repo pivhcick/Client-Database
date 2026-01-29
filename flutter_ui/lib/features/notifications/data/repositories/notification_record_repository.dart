@@ -17,10 +17,10 @@ class NotificationRecordRepository {
     int? limit,
   }) async {
     try {
-      // Build query with filters and JOIN to companies table
+      // Build query with JOINs to companies and reminders tables
       var baseQuery = _supabase
           .from('notification_records')
-          .select('*, companies(name)');
+          .select('*, companies(name), reminders(scheduled_for, status)');
 
       if (isRead != null) {
         baseQuery = baseQuery.eq('is_read', isRead);
@@ -34,6 +34,15 @@ class NotificationRecordRepository {
           : await queryBuilder;
 
       return (data as List)
+          .where((json) {
+            // Show only notifications whose reminder is delivered
+            final reminders = json['reminders'];
+            if (reminders == null) return true;
+            if (reminders is Map) {
+              return reminders['status'] == 'delivered';
+            }
+            return true;
+          })
           .map((json) => NotificationRecordModel.fromJson(json))
           .toList();
     } on PostgrestException catch (e) {
@@ -48,10 +57,17 @@ class NotificationRecordRepository {
     try {
       final response = await _supabase
           .from('notification_records')
-          .select('id')
+          .select('id, reminders(status)')
           .eq('is_read', false);
 
-      return (response as List).length;
+      return (response as List).where((json) {
+        final reminders = json['reminders'];
+        if (reminders == null) return true;
+        if (reminders is Map) {
+          return reminders['status'] == 'delivered';
+        }
+        return true;
+      }).length;
     } on PostgrestException catch (e) {
       throw Exception('Failed to get unread count: ${e.message}');
     } catch (e) {

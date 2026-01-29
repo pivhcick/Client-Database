@@ -308,43 +308,42 @@ class _CompanyFormPageState extends State<CompanyFormPage> {
                     ),
                     const SizedBox(height: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      height: 48,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
                         border: Border.all(color: const Color(0xFFC5C6CC)),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Center(
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<CompanyStatus>(
-                            value: _selectedStatus,
-                            isExpanded: true,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF2F3036),
-                              fontFamily: 'Inter',
-                            ),
-                            items: const [
-                              DropdownMenuItem(
-                                value: CompanyStatus.real,
-                                child: Text('Реальный'),
-                              ),
-                              DropdownMenuItem(
-                                value: CompanyStatus.potential,
-                                child: Text('Потенциальный'),
-                              ),
-                              DropdownMenuItem(
-                                value: CompanyStatus.lost,
-                                child: Text('Потерянный'),
-                              ),
-                            ],
-                            onChanged: (value) {
-                              if (value != null) {
-                                setState(() {
-                                  _selectedStatus = value;
-                                });
-                              }
-                            },
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<CompanyStatus>(
+                          value: _selectedStatus,
+                          isExpanded: true,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF2F3036),
+                            fontFamily: 'Inter',
                           ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: CompanyStatus.real,
+                              child: Text('Реальный'),
+                            ),
+                            DropdownMenuItem(
+                              value: CompanyStatus.potential,
+                              child: Text('Потенциальный'),
+                            ),
+                            DropdownMenuItem(
+                              value: CompanyStatus.lost,
+                              child: Text('Потерянный'),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() {
+                                _selectedStatus = value;
+                              });
+                            }
+                          },
                         ),
                       ),
                     ),
