@@ -106,10 +106,12 @@ void main() async {
             // Only create CompanyProvider if user is authenticated and has organization
             if (authProvider.isAuthenticated &&
                 authProvider.currentUser != null) {
-              final organizationId = authProvider.currentUser!.organizationId;
+              final user = authProvider.currentUser!;
               final companyRepository = CompanyRepository(
                 supabase: Supabase.instance.client,
-                organizationId: organizationId,
+                organizationId: user.organizationId,
+                userId: user.id,
+                userRole: user.role.value,
               );
               return CompanyProvider(companyRepository: companyRepository);
             }

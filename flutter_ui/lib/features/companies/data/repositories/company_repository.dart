@@ -17,23 +17,36 @@ enum SortDirection {
 
 /// Company repository
 ///
-/// Handles all data operations for companies with automatic organization_id filtering.
+/// Handles all data operations for companies with role-based access control.
+/// - Admin users see ALL companies in organization
+/// - Regular users see ONLY their own companies
 class CompanyRepository {
   final SupabaseClient _supabase;
   final String _organizationId;
+  final String _userId;
+  final String _userRole;
 
   CompanyRepository({
     required SupabaseClient supabase,
     required String organizationId,
+    required String userId,
+    required String userRole,
   })  : _supabase = supabase,
-        _organizationId = organizationId;
+        _organizationId = organizationId,
+        _userId = userId,
+        _userRole = userRole;
 
-  /// Get all companies in the organization
+  /// Get all companies (filtered by role)
+  /// Admin sees all companies, regular user sees only their own
   Future<List<Company>> getAllCompanies() async {
     try {
       final response = await _supabase.rpc(
         'get_companies',
-        params: {'org_id': _organizationId},
+        params: {
+          'org_id': _organizationId,
+          'user_id': _userId,
+          'user_role': _userRole,
+        },
       );
 
       final companies = (response as List)
@@ -48,7 +61,7 @@ class CompanyRepository {
     }
   }
 
-  /// Get company by ID
+  /// Get company by ID (with role-based access check)
   Future<Company> getCompanyById(String companyId) async {
     try {
       final response = await _supabase.rpc(
@@ -56,11 +69,13 @@ class CompanyRepository {
         params: {
           'comp_id': companyId,
           'org_id': _organizationId,
+          'user_id': _userId,
+          'user_role': _userRole,
         },
       );
 
       if (response == null || (response as List).isEmpty) {
-        throw Exception('Компания не найдена');
+        throw Exception('Компания не найдена или доступ запрещен');
       }
 
       final companyModel = CompanyModel.fromJson((response as List).first);
@@ -115,7 +130,7 @@ class CompanyRepository {
     }
   }
 
-  /// Update company
+  /// Update company (with role-based access check)
   Future<Company> updateCompany({
     required String companyId,
     String? name,
@@ -131,6 +146,8 @@ class CompanyRepository {
         params: {
           'comp_id': companyId,
           'org_id': _organizationId,
+          'user_id': _userId,
+          'user_role': _userRole,
           'comp_name': name,
           'comp_phone': phone,
           'comp_email': email,
@@ -152,13 +169,16 @@ class CompanyRepository {
           throw Exception('Компания с таким номером телефона уже существует');
         }
       }
+      if (e.message.contains('access denied')) {
+        throw Exception('Доступ запрещен');
+      }
       throw Exception('Ошибка обновления компании: ${e.message}');
     } catch (e) {
       throw Exception('Ошибка обновления компании: $e');
     }
   }
 
-  /// Delete company
+  /// Delete company (with role-based access check)
   Future<void> deleteCompany(String companyId) async {
     try {
       final response = await _supabase.rpc(
@@ -166,11 +186,13 @@ class CompanyRepository {
         params: {
           'comp_id': companyId,
           'org_id': _organizationId,
+          'user_id': _userId,
+          'user_role': _userRole,
         },
       );
 
       if (response == false) {
-        throw Exception('Компания не найдена или не удалена');
+        throw Exception('Компания не найдена или доступ запрещен');
       }
     } on PostgrestException catch (e) {
       throw Exception('Ошибка удаления компании: ${e.message}');
@@ -179,7 +201,7 @@ class CompanyRepository {
     }
   }
 
-  /// Search companies by name, phone, or address
+  /// Search companies by name, phone, or address (filtered by role)
   Future<List<Company>> searchCompanies(String query) async {
     if (query.isEmpty) {
       return getAllCompanies();
@@ -190,6 +212,8 @@ class CompanyRepository {
         'search_companies',
         params: {
           'org_id': _organizationId,
+          'user_id': _userId,
+          'user_role': _userRole,
           'search_query': query,
         },
       );
@@ -206,7 +230,7 @@ class CompanyRepository {
     }
   }
 
-  /// Get companies with filters and sorting
+  /// Get companies with filters and sorting (filtered by role)
   Future<List<Company>> getCompaniesFiltered({
     CompanyStatus? statusFilter,
     CompanySortField sortField = CompanySortField.createdAt,
@@ -234,6 +258,8 @@ class CompanyRepository {
         'get_companies_filtered',
         params: {
           'org_id': _organizationId,
+          'user_id': _userId,
+          'user_role': _userRole,
           'status_filter': statusFilter?.value,
           'sort_field': sortFieldName,
           'sort_direction': sortDir,
