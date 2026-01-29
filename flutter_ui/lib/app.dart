@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:collection/collection.dart';
 import 'dart:convert';
 import 'core/config/theme.dart';
 import 'core/utils/notification_helper.dart';
+import 'core/utils/logger.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/notifications/presentation/providers/notification_provider.dart';
 import 'routes/app_router.dart';
@@ -47,16 +49,14 @@ class _AppState extends State<App> {
 
         // Try to find the notification by reminderId and mark as read
         if (reminderId != null && notificationProvider.notifications.isNotEmpty) {
-          try {
-            final notification = notificationProvider.notifications.firstWhere(
-              (n) => n.reminderId == reminderId,
-            );
+          final notification = notificationProvider.notifications.firstWhereOrNull(
+            (n) => n.reminderId == reminderId,
+          );
 
-            if (!notification.isRead) {
-              notificationProvider.markAsRead(notification.id);
-            }
-          } catch (e) {
-            print('⚠️ Notification not found for reminderId: $reminderId');
+          if (notification != null && !notification.isRead) {
+            await notificationProvider.markAsRead(notification.id);
+          } else if (notification == null) {
+            AppLogger.warning('Notification not found for reminderId: $reminderId', 'App');
           }
         }
 
@@ -64,7 +64,7 @@ class _AppState extends State<App> {
         context.go('/notifications');
       }
     } catch (e) {
-      print('Error handling notification tap: $e');
+      AppLogger.error('Error handling notification tap', e, null, 'App');
     }
   }
 

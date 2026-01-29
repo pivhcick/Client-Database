@@ -23,17 +23,17 @@ class NotificationHelper {
   /// Initialize notifications
   Future<void> init() async {
     if (_initialized) {
-      AppLogger.warning('NotificationHelper already initialized', 'NotificationHelper', 'NotificationHelper');
+      AppLogger.warning('NotificationHelper already initialized', 'NotificationHelper');
       return;
     }
 
-    AppLogger.notification('Initializing timezone data...', 'NotificationHelper', 'NotificationHelper');
+    AppLogger.notification('Initializing timezone data...', 'NotificationHelper');
     // Initialize timezone
     tz.initializeTimeZones();
 
     // ✅ Установить локальную временную зону устройства
     final String timeZoneName = DateTime.now().timeZoneName;
-    AppLogger.debug('Device timezone name: $timeZoneName', 'NotificationHelper', 'NotificationHelper');
+    AppLogger.debug('Device timezone name: $timeZoneName', 'NotificationHelper');
 
     // iOS и некоторые платформы возвращают аббревиатуры (MSK, GMT+3),
     // которые не работают с timezone package.
@@ -41,14 +41,14 @@ class NotificationHelper {
     try {
       // Сначала пробуем по имени (работает на Android и некоторых платформах)
       tz.setLocalLocation(tz.getLocation(timeZoneName));
-      AppLogger.success('Timezone set to: ${tz.local.name}', 'NotificationHelper');
+      print('✅ Timezone set to: ${tz.local.name}');
     } catch (e) {
-      AppLogger.warning('Could not set timezone by name "$timeZoneName": $e', 'NotificationHelper');
+      print('⚠️ Could not set timezone by name "$timeZoneName": $e');
 
       // Если не получилось, определяем по offset
       final offset = DateTime.now().timeZoneOffset;
       final offsetHours = offset.inHours;
-      AppLogger.notification('Device timezone offset: GMT${offsetHours >= 0 ? '+' : ''}$offsetHours', 'NotificationHelper');
+      print('🔔 Device timezone offset: GMT${offsetHours >= 0 ? '+' : ''}$offsetHours');
 
       // Mapping основных часовых поясов по offset
       // Примечание: это упрощенный mapping, не учитывает DST
@@ -84,16 +84,16 @@ class NotificationHelper {
       if (timezoneName != null) {
         try {
           tz.setLocalLocation(tz.getLocation(timezoneName));
-          AppLogger.success('Timezone set to: $timezoneName (by offset)', 'NotificationHelper');
+          print('✅ Timezone set to: $timezoneName (by offset)');
         } catch (e2) {
-          AppLogger.warning('Could not set $timezoneName, using UTC: $e2', 'NotificationHelper');
+          print('⚠️ Could not set $timezoneName, using UTC: $e2');
         }
       } else {
-        AppLogger.warning('Unknown offset GMT$offsetHours, using UTC', 'NotificationHelper');
+        print('⚠️ Unknown offset GMT$offsetHours, using UTC');
       }
     }
 
-    AppLogger.success('Timezone initialized: ${tz.local.name}', 'NotificationHelper');
+    print('✅ Timezone initialized: ${tz.local.name}');
 
     // ✅ CRITICAL: Create Android notification channel BEFORE initialization
     // Without this, notifications won't work on Android 8.0+ (API 26+)
@@ -114,11 +114,11 @@ class NotificationHelper {
 
     if (androidPlugin != null) {
       await androidPlugin.createNotificationChannel(androidChannel);
-      AppLogger.success('Android notification channel created: ${androidChannel.id}', 'NotificationHelper');
+      print('✅ Android notification channel created: ${androidChannel.id}');
     }
 
     // Android initialization settings
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher', 'NotificationHelper');
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
 
     // iOS initialization settings
     const iosSettings = DarwinInitializationSettings(
@@ -137,20 +137,20 @@ class NotificationHelper {
       iOS: iosSettings,
     );
 
-    AppLogger.notification('Initializing flutter_local_notifications plugin...', 'NotificationHelper');
+    print('🔔 Initializing flutter_local_notifications plugin...');
     // Initialize
     final initialized = await _notifications.initialize(
       initSettings,
       onDidReceiveNotificationResponse: _onNotificationTapped,
     );
-    AppLogger.success('Plugin initialized: $initialized', 'NotificationHelper');
+    print('✅ Plugin initialized: $initialized');
 
     _initialized = true;
   }
 
   /// Request permissions (iOS and Android 13+)
   Future<bool> requestPermissions() async {
-    AppLogger.notification('Requesting notification permissions...', 'NotificationHelper');
+    print('🔔 Requesting notification permissions...');
 
     // Try iOS first
     final iosPlugin = _notifications
@@ -158,13 +158,13 @@ class NotificationHelper {
             IOSFlutterLocalNotificationsPlugin>();
 
     if (iosPlugin != null) {
-      AppLogger.info('iOS detected, requesting iOS permissions...', 'NotificationHelper', 'NotificationHelper');
+      print('📱 iOS detected, requesting iOS permissions...');
       final result = await iosPlugin.requestPermissions(
         alert: true,
         badge: true,
         sound: true,
       );
-      AppLogger.success('iOS permissions result: $result', 'NotificationHelper', 'NotificationHelper');
+      print('✅ iOS permissions result: $result');
       return result ?? true;
     }
 
@@ -174,13 +174,13 @@ class NotificationHelper {
             AndroidFlutterLocalNotificationsPlugin>();
 
     if (androidPlugin != null) {
-      AppLogger.info('Android detected, requesting Android 13+ permissions...', 'NotificationHelper', 'NotificationHelper');
+      print('🤖 Android detected, requesting Android 13+ permissions...');
       final result = await androidPlugin.requestNotificationsPermission();
-      AppLogger.success('Android permissions result: $result', 'NotificationHelper', 'NotificationHelper');
+      print('✅ Android permissions result: $result');
       return result ?? true;
     }
 
-    AppLogger.warning('No platform plugin available', 'NotificationHelper');
+    print('⚠️ No platform plugin available');
     return true;
   }
 
@@ -192,13 +192,13 @@ class NotificationHelper {
     required DateTime scheduledDate,
     String? payload,
   }) async {
-    AppLogger.notification('NotificationHelper.scheduleNotification called:', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('Notification ID: $id', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('Title: $title', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('Body: $body', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('Scheduled date (input): $scheduledDate', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('Current timezone: ${tz.local.name}', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('Current time: ${DateTime.now()}', 'NotificationHelper', 'NotificationHelper');
+    print('🔔 NotificationHelper.scheduleNotification called:');
+    print('  Notification ID: $id');
+    print('  Title: $title');
+    print('  Body: $body');
+    print('  Scheduled date (input): $scheduledDate');
+    print('  Current timezone: ${tz.local.name}');
+    print('  Current time: ${DateTime.now()}');
 
     // ✅ Правильная конвертация локального времени в TZDateTime
     // scheduledDate - это локальное время устройства без timezone info
@@ -214,10 +214,10 @@ class NotificationHelper {
       scheduledDate.second,
     );
 
-    AppLogger.debug('TZ scheduled date: $tzScheduledDate', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('TZ current time: ${tz.TZDateTime.now(tz.local)}', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('Time difference: ${tzScheduledDate.difference(tz.TZDateTime.now(tz.local)).inMinutes} minutes', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('Payload: $payload', 'NotificationHelper', 'NotificationHelper');
+    print('  TZ scheduled date: $tzScheduledDate');
+    print('  TZ current time: ${tz.TZDateTime.now(tz.local)}');
+    print('  Time difference: ${tzScheduledDate.difference(tz.TZDateTime.now(tz.local)).inMinutes} minutes');
+    print('  Payload: $payload');
 
     // Notification details
     const androidDetails = AndroidNotificationDetails(
@@ -253,9 +253,9 @@ class NotificationHelper {
             UILocalNotificationDateInterpretation.absoluteTime,
         payload: payload,
       );
-      AppLogger.success('zonedSchedule completed successfully', 'NotificationHelper');
+      print('✅ zonedSchedule completed successfully');
     } catch (e) {
-      AppLogger.error('Error scheduling notification: $e', 'NotificationHelper');
+      print('❌ Error scheduling notification: $e');
       rethrow;
     }
   }
@@ -267,15 +267,15 @@ class NotificationHelper {
     required String body,
     String? payload,
   }) async {
-    AppLogger.notification('NotificationHelper.showNotification called:', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('Notification ID: $id', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('Title: $title', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('Body: $body', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('Payload: $payload', 'NotificationHelper', 'NotificationHelper');
-    AppLogger.debug('Initialized: $_initialized', 'NotificationHelper', 'NotificationHelper');
+    print('🔔 NotificationHelper.showNotification called:');
+    print('  Notification ID: $id');
+    print('  Title: $title');
+    print('  Body: $body');
+    print('  Payload: $payload');
+    print('  Initialized: $_initialized');
 
     if (!_initialized) {
-      AppLogger.error('ERROR: NotificationHelper not initialized!', 'NotificationHelper');
+      print('❌ ERROR: NotificationHelper not initialized!');
       return;
     }
 
@@ -299,7 +299,7 @@ class NotificationHelper {
     );
 
     try {
-      AppLogger.notification('Calling _notifications.show()...', 'NotificationHelper');
+      print('🔔 Calling _notifications.show()...');
       await _notifications.show(
         id,
         title,
@@ -307,9 +307,9 @@ class NotificationHelper {
         notificationDetails,
         payload: payload,
       );
-      AppLogger.success('_notifications.show() completed successfully', 'NotificationHelper');
+      print('✅ _notifications.show() completed successfully');
     } catch (e) {
-      AppLogger.error('Error showing notification: $e', 'NotificationHelper');
+      print('❌ Error showing notification: $e');
       rethrow;
     }
   }
@@ -331,13 +331,13 @@ class NotificationHelper {
 
   /// Notification tapped callback
   void _onNotificationTapped(NotificationResponse response) {
-    AppLogger.notification('Notification tapped: ${response.payload}', 'NotificationHelper');
+    print('🔔 Notification tapped: ${response.payload}');
 
     // Call the registered callback if available
     if (onNotificationTapped != null) {
       onNotificationTapped!(response.payload);
     } else {
-      AppLogger.warning('No onNotificationTapped callback registered', 'NotificationHelper');
+      print('⚠️ No onNotificationTapped callback registered');
     }
   }
 }

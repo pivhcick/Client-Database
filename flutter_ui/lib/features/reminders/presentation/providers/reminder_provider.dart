@@ -5,6 +5,7 @@ import '../../domain/entities/reminder.dart';
 import '../../domain/entities/reminder_status.dart';
 import '../../data/repositories/reminder_repository.dart';
 import '../../../../core/utils/notification_helper.dart';
+import '../../../../core/utils/logger.dart';
 import '../../../notifications/presentation/providers/notification_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
@@ -17,6 +18,7 @@ class ReminderProvider extends ChangeNotifier {
   NotificationProvider? _notificationProvider;
   AuthProvider? _authProvider;
   Timer? _statusUpdateTimer;
+  bool _timerStarted = false; // Flag to prevent multiple timer starts
 
   ReminderProvider({
     required ReminderRepository repository,
@@ -88,7 +90,7 @@ class ReminderProvider extends ChangeNotifier {
 
   /// Load reminders for a company
   Future<void> loadRemindersByCompany(String companyId) async {
-    print('🔄 loadRemindersByCompany called for companyId: $companyId');
+    AppLogger.database('loadRemindersByCompany called for companyId: $companyId', 'ReminderProvider');
     _currentCompanyId = companyId;
     _isLoading = true;
     _hasError = false;
@@ -97,20 +99,20 @@ class ReminderProvider extends ChangeNotifier {
 
     try {
       _reminders = await _repository.getByCompanyId(companyId);
-      print('✅ Loaded ${_reminders.length} reminders from database');
+      AppLogger.success('Loaded ${_reminders.length} reminders from database', 'ReminderProvider');
       _hasError = false;
 
       // Update expired reminders to delivered status
       await updateExpiredReminders();
-      print('✅ After updateExpiredReminders: ${_reminders.length} reminders');
+      AppLogger.debug('After updateExpiredReminders: ${_reminders.length} reminders', 'ReminderProvider');
     } catch (e) {
-      print('❌ Error loading reminders: $e');
+      AppLogger.error('Error loading reminders', e, null, 'ReminderProvider');
       _hasError = true;
       _errorMessage = e.toString().replaceAll('Exception: ', '');
       _reminders = [];
     } finally {
       _isLoading = false;
-      print('✅ loadRemindersByCompany complete. Final count: ${_reminders.length}');
+      AppLogger.debug('loadRemindersByCompany complete. Final count: ${_reminders.length}', 'ReminderProvider');
       _safeNotifyListeners();
     }
   }
@@ -148,7 +150,7 @@ class ReminderProvider extends ChangeNotifier {
     try {
       await _createNotificationRecord(reminder);
     } catch (e) {
-      print('⚠️ Failed to create notification record, but reminder was created: $e');
+      AppLogger.warning('Failed to create notification record, but reminder was created: $e', 'ReminderProvider');
     }
 
     // Note: List reloading is handled by the UI after dialog closes
@@ -231,7 +233,7 @@ class ReminderProvider extends ChangeNotifier {
   /// Uses PostgreSQL RPC function for atomic database-level update
   Future<void> updateExpiredReminders() async {
     try {
-      print('🔄 Updating expired reminders via database RPC...');
+      AppLogger.database('Updating expired reminders via database RPC...', 'ReminderProvider');
 
       // Get currently expired reminders before updating
       final expiredReminders = _reminders
@@ -243,7 +245,7 @@ class ReminderProvider extends ChangeNotifier {
       // Call database RPC function to update all expired reminders atomically
       final updatedCount = await _repository.updateExpiredRemindersInDatabase();
 
-      print('✅ Database RPC updated $updatedCount reminders');
+      AppLogger.success('Database RPC updated $updatedCount reminders', 'ReminderProvider');
 
       // Reload reminders to get updated statuses from database
       if (_currentCompanyId != null) {
@@ -252,30 +254,30 @@ class ReminderProvider extends ChangeNotifier {
         _reminders = await _repository.getAllReminders(_currentUserId!);
       }
 
-      print('✅ Reminders reloaded from database');
+      AppLogger.success('Reminders reloaded from database', 'ReminderProvider');
 
       // Note: Notification records are created when reminder is first scheduled
       // No need to create them again when status changes to delivered
-      print('📝 ${expiredReminders.length} reminders were marked as delivered');
-      print('   Notification records should have been created during reminder creation');
+      AppLogger.debug('${expiredReminders.length} reminders were marked as delivered', 'ReminderProvider');
+      AppLogger.debug('Notification records should have been created during reminder creation', 'ReminderProvider');
     } catch (e) {
-      print('❌ Error updating expired reminders: $e');
+      AppLogger.error('Error updating expired reminders', e, null, 'ReminderProvider');
       // Don't rethrow - just log the error
     }
   }
 
   /// Create notification record for a delivered reminder
   Future<void> _createNotificationRecord(Reminder reminder) async {
-    print('📝 _createNotificationRecord called for reminder ${reminder.id}');
-    print('   _notificationProvider: ${_notificationProvider != null ? "available" : "NULL"}');
-    print('   _authProvider: ${_authProvider != null ? "available" : "NULL"}');
-    print('   _authProvider.currentUser: ${_authProvider?.currentUser != null ? "available" : "NULL"}');
+    AppLogger.notification('_createNotificationRecord called for reminder ${reminder.id}', 'ReminderProvider');
+    AppLogger.debug('_notificationProvider: ${_notificationProvider != null ? "available" : "NULL"}', 'ReminderProvider');
+    AppLogger.debug('_authProvider: ${_authProvider != null ? "available" : "NULL"}', 'ReminderProvider');
+    AppLogger.debug('_authProvider.currentUser: ${_authProvider?.currentUser != null ? "available" : "NULL"}', 'ReminderProvider');
 
     if (_notificationProvider == null ||
         _authProvider == null ||
         _authProvider!.currentUser == null) {
-      print('⚠️ Cannot create notification record: missing dependencies');
-      print('   Skipping notification record creation');
+      AppLogger.warning('Cannot create notification record: missing dependencies', 'ReminderProvider');
+      AppLogger.debug('Skipping notification record creation', 'ReminderProvider');
       return;
     }
 
@@ -283,12 +285,12 @@ class ReminderProvider extends ChangeNotifier {
       final currentUser = _authProvider!.currentUser!;
       final companyName = reminder.companyName ?? 'Компания';
 
-      print('📝 Creating notification record:');
-      print('   reminderId: ${reminder.id}');
-      print('   companyId: ${reminder.companyId}');
-      print('   userId: ${currentUser.id}');
-      print('   organizationId: ${currentUser.organizationId}');
-      print('   title: ${reminder.title}');
+      AppLogger.notification('Creating notification record:', 'ReminderProvider');
+      AppLogger.debug('reminderId: ${reminder.id}', 'ReminderProvider');
+      AppLogger.debug('companyId: ${reminder.companyId}', 'ReminderProvider');
+      AppLogger.debug('userId: ${currentUser.id}', 'ReminderProvider');
+      AppLogger.debug('organizationId: ${currentUser.organizationId}', 'ReminderProvider');
+      AppLogger.debug('title: ${reminder.title}', 'ReminderProvider');
 
       await _notificationProvider!.createNotificationRecord(
         reminderId: reminder.id,
@@ -300,24 +302,23 @@ class ReminderProvider extends ChangeNotifier {
             (reminder.description != null ? '\n${reminder.description}' : ''),
       );
 
-      print('✅ Notification record created for reminder ${reminder.id}');
-    } catch (e) {
-      print('❌ Error creating notification record: $e');
-      print('   Stack trace: ${StackTrace.current}');
+      AppLogger.success('Notification record created for reminder ${reminder.id}', 'ReminderProvider');
+    } catch (e, stackTrace) {
+      AppLogger.error('Error creating notification record', e, stackTrace, 'ReminderProvider');
       // Don't rethrow - notification record creation shouldn't block the update
     }
   }
 
   /// Schedule notification for a reminder
   Future<void> _scheduleNotification(Reminder reminder) async {
-    print('📅 Scheduling notification for reminder:');
-    print('  ID: ${reminder.id}');
-    print('  Notification ID (hashCode): ${reminder.id.hashCode}');
-    print('  Title: ${reminder.title}');
-    print('  Scheduled for: ${reminder.scheduledFor}');
-    print('  Current time: ${DateTime.now()}');
-    print('  Is in future: ${reminder.scheduledFor.isAfter(DateTime.now())}');
-    print('  Status: ${reminder.status}');
+    AppLogger.notification('Scheduling notification for reminder:', 'ReminderProvider');
+    AppLogger.debug('ID: ${reminder.id}', 'ReminderProvider');
+    AppLogger.debug('Notification ID (hashCode): ${reminder.id.hashCode}', 'ReminderProvider');
+    AppLogger.debug('Title: ${reminder.title}', 'ReminderProvider');
+    AppLogger.debug('Scheduled for: ${reminder.scheduledFor}', 'ReminderProvider');
+    AppLogger.debug('Current time: ${DateTime.now()}', 'ReminderProvider');
+    AppLogger.debug('Is in future: ${reminder.scheduledFor.isAfter(DateTime.now())}', 'ReminderProvider');
+    AppLogger.debug('Status: ${reminder.status}', 'ReminderProvider');
 
     // Only schedule if in the future and status is pending
     if (reminder.scheduledFor.isAfter(DateTime.now()) &&
@@ -331,8 +332,8 @@ class ReminderProvider extends ChangeNotifier {
         'companyId': reminder.companyId,
       });
 
-      print('✅ Calling notificationHelper.scheduleNotification...');
-      print('  Payload: $payload');
+      AppLogger.notification('Calling notificationHelper.scheduleNotification...', 'ReminderProvider');
+      AppLogger.debug('Payload: $payload', 'ReminderProvider');
 
       await _notificationHelper.scheduleNotification(
         id: notificationId,
@@ -342,21 +343,21 @@ class ReminderProvider extends ChangeNotifier {
         payload: payload,
       );
 
-      print('✅ Notification scheduled successfully');
+      AppLogger.success('Notification scheduled successfully', 'ReminderProvider');
 
       // Check pending notifications
       final pending = await _notificationHelper.getPendingNotifications();
-      print('📋 Total pending notifications: ${pending.length}');
+      AppLogger.debug('Total pending notifications: ${pending.length}', 'ReminderProvider');
       for (final p in pending) {
-        print('  - [${p.id}] ${p.title} - ${p.body}');
+        AppLogger.debug('- [${p.id}] ${p.title} - ${p.body}', 'ReminderProvider');
       }
     } else {
-      print('⚠️ Notification NOT scheduled:');
+      AppLogger.warning('Notification NOT scheduled:', 'ReminderProvider');
       if (!reminder.scheduledFor.isAfter(DateTime.now())) {
-        print('  Reason: Time is in the past');
+        AppLogger.debug('Reason: Time is in the past', 'ReminderProvider');
       }
       if (reminder.status != ReminderStatus.pending) {
-        print('  Reason: Status is not pending (${reminder.status})');
+        AppLogger.debug('Reason: Status is not pending (${reminder.status})', 'ReminderProvider');
       }
     }
   }
@@ -369,7 +370,13 @@ class ReminderProvider extends ChangeNotifier {
 
   /// Start periodic timer to check and update expired reminder statuses
   void _startStatusUpdateTimer() {
-    // Cancel existing timer if any
+    // Prevent multiple timer starts
+    if (_timerStarted) {
+      AppLogger.warning('Timer already started, skipping...', 'ReminderProvider');
+      return;
+    }
+
+    // Cancel existing timer if any (safety check)
     _statusUpdateTimer?.cancel();
 
     // Check every 30 seconds for expired reminders
@@ -378,17 +385,18 @@ class ReminderProvider extends ChangeNotifier {
       (_) async {
         // Only update if we have loaded reminders and not currently loading
         if (_reminders.isNotEmpty && !_isLoading && !_disposed) {
-          print('⏰ Timer: Checking for expired reminders...');
+          AppLogger.timer('Checking for expired reminders...', 'ReminderProvider');
           try {
             await updateExpiredReminders();
             _safeNotifyListeners();
           } catch (e) {
-            print('❌ Timer: Error updating expired reminders: $e');
+            AppLogger.error('Timer: Error updating expired reminders', e, null, 'ReminderProvider');
           }
         }
       },
     );
-    print('✅ Status update timer started (every 30 seconds)');
+    _timerStarted = true;
+    AppLogger.success('Status update timer started (every 30 seconds)', 'ReminderProvider');
   }
 
   /// Safe notifyListeners that checks if disposed
@@ -402,7 +410,9 @@ class ReminderProvider extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _statusUpdateTimer?.cancel();
-    print('🛑 Status update timer cancelled');
+    _statusUpdateTimer = null;
+    _timerStarted = false;
+    AppLogger.info('Status update timer cancelled and disposed', 'ReminderProvider');
     super.dispose();
   }
 }
