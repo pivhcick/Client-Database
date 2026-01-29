@@ -55,6 +55,21 @@ class NotificationProvider extends ChangeNotifier {
     }
   }
 
+  /// Refresh only the unread count (called when reminder statuses change)
+  Future<void> refreshUnreadCount() async {
+    try {
+      final newCount = await _repository.getUnreadCount();
+      if (newCount != _unreadCount) {
+        _unreadCount = newCount;
+        notifyListeners();
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error refreshing unread count: $e');
+      }
+    }
+  }
+
   /// Refresh notifications (pull-to-refresh)
   Future<void> refreshNotifications() async {
     try {

@@ -259,7 +259,11 @@ class ReminderProvider extends ChangeNotifier {
       // Note: Notification records are created when reminder is first scheduled
       // No need to create them again when status changes to delivered
       AppLogger.debug('${expiredReminders.length} reminders were marked as delivered', 'ReminderProvider');
-      AppLogger.debug('Notification records should have been created during reminder creation', 'ReminderProvider');
+
+      // Refresh notification badge count when reminders become delivered
+      if (updatedCount > 0 && _notificationProvider != null) {
+        await _notificationProvider!.refreshUnreadCount();
+      }
     } catch (e) {
       AppLogger.error('Error updating expired reminders', e, null, 'ReminderProvider');
       // Don't rethrow - just log the error
