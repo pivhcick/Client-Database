@@ -72,8 +72,8 @@ void main() async {
   // Create providers
   final authProvider = AuthProvider(authRepository: authRepository);
 
-  // Initialize auth state (check if user is already logged in)
-  await authProvider.initializeAuth();
+  // Initialize auth state asynchronously (splash screen shown while loading)
+  authProvider.initializeAuth();
 
   // Run app
   runApp(

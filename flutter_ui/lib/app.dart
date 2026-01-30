@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'core/config/theme.dart';
 import 'core/utils/notification_helper.dart';
 import 'core/utils/logger.dart';
+import 'core/widgets/splash_screen.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/notifications/presentation/providers/notification_provider.dart';
 import 'routes/app_router.dart';
@@ -91,6 +92,17 @@ class _AppState extends State<App> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, _) {
+        // Show splash screen while auth is initializing
+        if (authProvider.state == AuthState.initial ||
+            authProvider.state == AuthState.loading) {
+          return MaterialApp(
+            title: 'Just CRM',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            home: const SplashScreen(),
+          );
+        }
+
         // Create router with auth provider
         final router = AppRouter(authProvider: authProvider).router;
 
